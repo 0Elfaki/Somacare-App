@@ -76,23 +76,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF4F46E5),
+      backgroundColor: AppColors.accent,
       body: Column(
         children: [
-          // ── Hero area (Gradient & Large engaging illustration) ─────────────
+          // ── Hero area ────────────────────────────────────────────────────
           Expanded(
             flex: 6,
             child: Container(
               decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFF6366F1),
-                    Color(0xFF4F46E5),
-                    Color(0xFF3730A3),
-                  ],
-                ),
+                color: AppColors.accent,
               ),
               child: SafeArea(
                 bottom: false,
@@ -184,29 +176,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   alignment: Alignment.center,
                                   clipBehavior: Clip.none,
                                   children: [
-                                    // Ambient background glow rings
-                                    Container(
-                                      width: iconBoxSize * 1.5,
-                                      height: iconBoxSize * 1.5,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: Colors.white
-                                            .withValues(alpha: 0.06),
-                                      ),
-                                    ),
-                                    Container(
-                                      width: iconBoxSize * 1.25,
-                                      height: iconBoxSize * 1.25,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: Colors.white
-                                              .withValues(alpha: 0.12),
-                                          width: 1.5,
-                                        ),
-                                      ),
-                                    ),
-
                                     // Main Hero Card
                                     Container(
                                       width: iconBoxSize,

@@ -96,7 +96,7 @@ class _VideoWaitingRoomScreenState extends State<VideoWaitingRoomScreen> {
                 ),
                 const SizedBox(height: 5),
                 Text(
-                  "They'll join shortly — hang tight",
+                  "They'll join shortly, hang tight",
                   style: BloomTextStyles.inter(
                     size: 11.5,
                     color: Colors.white.withValues(alpha: 0.7),

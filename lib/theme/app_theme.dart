@@ -69,10 +69,15 @@ class AppColors {
   static const Color errorWash = Color(0x1ADC2626);
   static const Color errorTint = Color(0x28DC2626);
 
-  /// AI, wellness and chat surfaces.
-  static const Color accent = Color(0xFF7C3AED);
-  static const Color accentWash = Color(0x1A7C3AED);
-  static const Color accentTint = Color(0x287C3AED);
+  /// Emphasis surface for AI-assisted and wellness content. Deliberately
+  /// not a standalone "AI color" — same brand family as everything else,
+  /// so AI-assisted features don't visually announce themselves as a
+  /// separate, flashier product. (Brand maroon-600/700; the rest of the
+  /// app migrates to this family in a later pass.)
+  static const Color accent = Color(0xFF8B1E3F);
+  static const Color accentDark = Color(0xFF6B1730);
+  static const Color accentWash = Color(0x1A8B1E3F);
+  static const Color accentTint = Color(0x288B1E3F);
 
   /// Neutral / informational.
   static const Color info = primaryLight;

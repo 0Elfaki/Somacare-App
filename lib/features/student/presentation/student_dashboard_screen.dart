@@ -171,7 +171,10 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       category: 'Chat',
       icon: Icons.chat_bubble_outline_rounded,
       color: AppColors.fillBlue,
-      onTap: () => context.push('/messaging-chat'),
+      // Messaging needs a specific doctor thread to open (see
+      // MessagingChatScreen); route through appointments, where the
+      // Message action on a confirmed appointment carries that context.
+      onTap: () => context.push('/my-appointments'),
     ),
     AppQuickAction(
       label: 'Book appointment',
@@ -307,7 +310,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
               eyebrow: 'URGENT CARE',
               title: 'Talk to a doctor in minutes',
               subtitle:
-                  'For symptoms that need attention now — connect with an '
+                  'For symptoms that need attention now, connect with an '
                   'on-call doctor right away.',
               gradient: const [AppColors.error, AppColors.errorDark],
               primaryLabel: 'CONNECT NOW',
@@ -327,7 +330,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
               subtitle:
                   "Get instant AI-guided insight into what you're feeling and "
                   'what to do next.',
-              gradient: const [AppColors.accent, AppColors.primary],
+              gradient: const [AppColors.accent, AppColors.accentDark],
               primaryLabel: 'START CHECK',
               onPrimary: () => context.go('/symptom-check'),
             ),

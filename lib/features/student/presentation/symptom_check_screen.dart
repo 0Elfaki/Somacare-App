@@ -155,7 +155,7 @@ class _SymptomCheckScreenState extends State<SymptomCheckScreen> {
           const _Msg(
             role: 'assistant',
             text:
-                'The AI symptom checker isn\'t configured yet — it needs a '
+                'The AI symptom checker isn\'t configured yet. It needs a '
                 'Groq API key passed in at build time '
                 '(--dart-define=GROQ_API_KEY=...). Get a free key at '
                 'console.groq.com/keys.',
@@ -211,7 +211,7 @@ class _SymptomCheckScreenState extends State<SymptomCheckScreen> {
           _isTyping = false;
           // ✅ show real error in chat so we can debug
           _messages.add(
-            _Msg(role: 'assistant', text: '⚠️ Error: ${e.toString()}'),
+            _Msg(role: 'assistant', text: 'Error: ${e.toString()}'),
           );
         });
         _scrollToBottom();
@@ -319,7 +319,7 @@ no commentary) in exactly this shape:
               height: 36,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [AppColors.accent, AppColors.primaryLight],
+                  colors: [AppColors.accent, AppColors.accentDark],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -384,7 +384,7 @@ no commentary) in exactly this shape:
                   const _Msg(
                     role: 'assistant',
                     text:
-                        "Hi! I'm your AI health assistant 👋\n\nTell me what symptoms you're experiencing and I'll help you understand what might be going on and what to do next.",
+                        "Hi! I'm your AI health assistant.\n\nTell me what symptoms you're experiencing and I'll help you understand what might be going on and what to do next.",
                   ),
                 );
               });
@@ -409,7 +409,7 @@ no commentary) in exactly this shape:
                 SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    'AI assistant only — not a substitute for professional medical advice.',
+                    'AI assistant only. Not a substitute for professional medical advice.',
                     style: TextStyle(
                       fontSize: 11,
                       color: AppColors.warningDark,
@@ -570,7 +570,7 @@ no commentary) in exactly this shape:
                     height: 46,
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [AppColors.accent, AppColors.primaryLight],
+                        colors: [AppColors.accent, AppColors.accentDark],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -616,7 +616,7 @@ class _ChatBubble extends StatelessWidget {
               margin: const EdgeInsets.only(right: 8),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [AppColors.accent, AppColors.primaryLight],
+                  colors: [AppColors.accent, AppColors.accentDark],
                 ),
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -695,7 +695,7 @@ class _TypingBubble extends StatelessWidget {
             margin: const EdgeInsets.only(right: 8),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [AppColors.accent, AppColors.primaryLight],
+                colors: [AppColors.accent, AppColors.accentDark],
               ),
               borderRadius: BorderRadius.circular(8),
             ),
@@ -853,7 +853,7 @@ class _SymptomChecklistBubble extends StatelessWidget {
             margin: const EdgeInsets.only(right: 8),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [AppColors.accent, AppColors.primaryLight],
+                colors: [AppColors.accent, AppColors.accentDark],
               ),
               borderRadius: BorderRadius.circular(8),
             ),

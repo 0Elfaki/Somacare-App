@@ -18,16 +18,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = true;
   bool _isEditing = false;
 
-  int _height = 170;
-  int _weight = 70;
-  String _bloodType = 'A+';
-  int _systolic = 120;
-  int _diastolic = 80;
+  // Nullable: null means the student has never recorded this vital, and
+  // we must not show (or silently persist) a fabricated placeholder value
+  // in its place. _PickerRow already renders an empty value as '—'.
+  int? _height;
+  int? _weight;
+  String? _bloodType;
+  int? _systolic;
+  int? _diastolic;
 
   // ── Settings state ──
   bool _notificationsEnabled = true;
-  bool _darkMode = false;
-  String _language = 'English';
 
   final _allergiesCtrl = TextEditingController();
 
@@ -71,13 +72,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) {
         setState(() {
           _profile = data;
-          _height = int.tryParse(data?['height']?.toString() ?? '') ?? 170;
-          _weight = int.tryParse(data?['weight']?.toString() ?? '') ?? 70;
-          _bloodType = data?['blood_type'] as String? ?? 'A+';
-          final bp = (data?['blood_pressure'] ?? '120/80').toString();
-          final parts = bp.split('/');
-          _systolic = int.tryParse(parts.isNotEmpty ? parts[0] : '120') ?? 120;
-          _diastolic = int.tryParse(parts.length > 1 ? parts[1] : '80') ?? 80;
+          _height = int.tryParse(data?['height']?.toString() ?? '');
+          _weight = int.tryParse(data?['weight']?.toString() ?? '');
+          _bloodType = data?['blood_type'] as String?;
+          final bp = data?['blood_pressure']?.toString();
+          if (bp != null && bp.contains('/')) {
+            final parts = bp.split('/');
+            _systolic = int.tryParse(parts[0]);
+            _diastolic = int.tryParse(parts.length > 1 ? parts[1] : '');
+          } else {
+            _systolic = null;
+            _diastolic = null;
+          }
           _allergiesCtrl.text = data?['allergies'] as String? ?? '';
           _isLoading = false;
         });
@@ -92,14 +98,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       final userId = Supabase.instance.client.auth.currentUser?.id;
       if (userId == null) return;
-      await Supabase.instance.client.from('profiles').upsert({
+      // Only write vitals the student has actually set via a picker (or
+      // that were already on file) — never a fabricated placeholder
+      // value for a field they never touched.
+      final updates = <String, dynamic>{
         'id': userId,
-        'height': _height.toString(),
-        'weight': _weight.toString(),
-        'blood_type': _bloodType,
-        'blood_pressure': '$_systolic/$_diastolic',
         'allergies': _allergiesCtrl.text.trim(),
-      });
+      };
+      if (_height != null) updates['height'] = _height.toString();
+      if (_weight != null) updates['weight'] = _weight.toString();
+      if (_bloodType != null) updates['blood_type'] = _bloodType;
+      if (_systolic != null && _diastolic != null) {
+        updates['blood_pressure'] = '$_systolic/$_diastolic';
+      }
+      await Supabase.instance.client.from('profiles').upsert(updates);
       if (mounted) {
         setState(() => _isEditing = false);
         showAppSnack(
@@ -125,7 +137,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ── Pickers ───────────────────────────────────────────────────────────────
   void _pickHeight() {
-    int temp = _height;
+    int temp = _height ?? 170;
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -155,7 +167,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _pickWeight() {
-    int temp = _weight;
+    int temp = _weight ?? 70;
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -180,7 +192,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _pickBloodType() {
-    String temp = _bloodType;
+    String temp = _bloodType ?? _bloodTypes.first;
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -191,7 +203,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: CupertinoPicker(
           scrollController: FixedExtentScrollController(
             initialItem: _bloodTypes
-                .indexOf(_bloodType)
+                .indexOf(temp)
                 .clamp(0, _bloodTypes.length - 1),
           ),
           itemExtent: 44,
@@ -210,8 +222,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _pickBP() {
-    int tempS = _systolic;
-    int tempD = _diastolic;
+    int tempS = _systolic ?? 120;
+    int tempD = _diastolic ?? 80;
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -357,13 +369,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // ── Payment Sheets ────────────────────────────────────────────────────────
-  void _showPaymentSheet(
+  // Linking a payment method here isn't wired to anything real yet — there
+  // is no backend table or gateway behind it. It used to collect a phone
+  // number (or, worse, a full card number + expiry + CVV) and then claim
+  // success regardless, which is worse than doing nothing: it told the
+  // student a payment method was on file when none was. This sheet says so
+  // plainly instead, and collects nothing.
+  void _showComingSoonPaymentSheet(
     BuildContext ctx,
     String title,
-    String hint,
+    IconData icon,
     Color color,
   ) {
-    final ctrl = TextEditingController();
     showModalBottomSheet(
       context: ctx,
       isScrollControlled: true,
@@ -392,158 +409,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            Text(
-              'Link $title',
-              style: const TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w900,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: ctrl,
-              keyboardType: TextInputType.phone,
-              decoration: InputDecoration(
-                hintText: hint,
-                filled: true,
-                fillColor: AppColors.surfaceMuted,
-                border: OutlineInputBorder(
-                  borderRadius: AppRadius.mdAll,
-                  borderSide: BorderSide(color: color),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: AppRadius.mdAll,
-                  borderSide: BorderSide(color: color, width: 2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  ScaffoldMessenger.of(ctx).showSnackBar(
-                    SnackBar(
-                      content: Text('✅ $title linked!'),
-                      backgroundColor: color,
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: color,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                child: const Text(
-                  'Link Account',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    )
-        // The sheet owns this controller; release it when the sheet
-        // closes rather than leaking one per open.
-        .whenComplete(ctrl.dispose);
-  }
-
-  void _showCardSheet(BuildContext ctx) {
-    final cardCtrl = TextEditingController();
-    final expiryCtrl = TextEditingController();
-    final cvvCtrl = TextEditingController();
-    showModalBottomSheet(
-      context: ctx,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) => Padding(
-        padding: EdgeInsets.fromLTRB(
-          20,
-          20,
-          20,
-          MediaQuery.of(ctx).viewInsets.bottom + 24,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.textMuted,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Add Card',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w900,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: cardCtrl,
-              keyboardType: TextInputType.number,
-              decoration: _cardDeco('Card Number', Icons.credit_card),
-            ),
-            const SizedBox(height: 12),
             Row(
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: expiryCtrl,
-                    decoration: _cardDeco('MM/YY', Icons.date_range),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextField(
-                    controller: cvvCtrl,
-                    obscureText: true,
-                    decoration: _cardDeco('CVV', Icons.lock_outline),
+                Icon(icon, color: color),
+                const SizedBox(width: 10),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
+            const Text(
+              'Saving payment methods here isn\'t available yet. You can '
+              'still pay with MTN or Airtel Money directly when you book an '
+              'appointment.',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
               height: 50,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  ScaffoldMessenger.of(ctx).showSnackBar(
-                    const SnackBar(
-                      content: Text('✅ Card added!'),
-                      backgroundColor: AppColors.info,
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.info,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
+              child: OutlinedButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: AppColors.border),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
                 child: const Text(
-                  'Add Card',
+                  'Close',
                   style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
                 ),
               ),
@@ -551,29 +455,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
       ),
-    )
-        // The sheet owns these controllers; release them when it closes.
-        .whenComplete(() {
-      cardCtrl.dispose();
-      expiryCtrl.dispose();
-      cvvCtrl.dispose();
-    });
+    );
   }
-
-  InputDecoration _cardDeco(String hint, IconData icon) => InputDecoration(
-    hintText: hint,
-    prefixIcon: Icon(icon, size: 18, color: AppColors.textMuted),
-    filled: true,
-    fillColor: AppColors.surfaceMuted,
-    border: const OutlineInputBorder(
-      borderRadius: AppRadius.mdAll,
-      borderSide: BorderSide(color: AppColors.border),
-    ),
-    focusedBorder: const OutlineInputBorder(
-      borderRadius: AppRadius.mdAll,
-      borderSide: BorderSide(color: AppColors.info, width: 2),
-    ),
-  );
 
   // ── Change Password ───────────────────────────────────────────────────────
   void _showChangePasswordSheet(BuildContext ctx) {
@@ -645,7 +528,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('✅ Password updated!'),
+                          content: Text('Password updated!'),
                           backgroundColor: AppColors.success,
                         ),
                       );
@@ -654,7 +537,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('❌ $e'),
+                          content: Text(
+                            userFriendlyErrorMessage(
+                              e,
+                              defaultMessage:
+                                  'Could not update your password. Please try again.',
+                            ),
+                          ),
                           backgroundColor: AppColors.error,
                         ),
                       );
@@ -986,7 +875,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 _PickerRow(
                                   icon: Icons.height,
                                   label: 'Height',
-                                  value: '$_height cm',
+                                  value: _height != null ? '$_height cm' : '',
                                   editing: _isEditing,
                                   onTap: _pickHeight,
                                 ),
@@ -994,7 +883,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 _PickerRow(
                                   icon: Icons.monitor_weight_outlined,
                                   label: 'Weight',
-                                  value: '$_weight kg',
+                                  value: _weight != null ? '$_weight kg' : '',
                                   editing: _isEditing,
                                   onTap: _pickWeight,
                                 ),
@@ -1002,7 +891,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 _PickerRow(
                                   icon: Icons.bloodtype_outlined,
                                   label: 'Blood Type',
-                                  value: _bloodType,
+                                  value: _bloodType ?? '',
                                   editing: _isEditing,
                                   onTap: _pickBloodType,
                                 ),
@@ -1010,7 +899,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 _PickerRow(
                                   icon: Icons.favorite_outline,
                                   label: 'Blood Pressure',
-                                  value: '$_systolic / $_diastolic mmHg',
+                                  value: (_systolic != null && _diastolic != null)
+                                      ? '$_systolic / $_diastolic mmHg'
+                                      : '',
                                   editing: _isEditing,
                                   onTap: _pickBP,
                                 ),
@@ -1093,48 +984,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             child: Column(
                               children: [
                                 _PaymentTile(
-                                  logo: '📱',
+                                  icon: Icons.phone_android,
                                   name: 'MTN Mobile Money',
                                   subtitle: 'Link your MTN MoMo number',
                                   color: PaymentBrandColors.mpesaYellow,
-                                  onTap: () => _showPaymentSheet(
+                                  onTap: () => _showComingSoonPaymentSheet(
                                     context,
                                     'MTN Mobile Money',
-                                    'Enter MTN number (e.g. 077X XXX XXX)',
+                                    Icons.phone_android,
                                     PaymentBrandColors.mpesaAmber,
                                   ),
                                 ),
                                 const _HDivider(),
                                 _PaymentTile(
-                                  logo: '📱',
+                                  icon: Icons.phone_android,
                                   name: 'Airtel Money',
                                   subtitle: 'Link your Airtel number',
                                   color: AppColors.error,
-                                  onTap: () => _showPaymentSheet(
+                                  onTap: () => _showComingSoonPaymentSheet(
                                     context,
                                     'Airtel Money',
-                                    'Enter Airtel number (e.g. 075X XXX XXX)',
+                                    Icons.phone_android,
                                     AppColors.error,
                                   ),
                                 ),
                                 const _HDivider(),
                                 _PaymentTile(
-                                  logo: '💳',
+                                  icon: Icons.credit_card,
                                   name: 'Visa / Mastercard',
                                   subtitle: 'Add a debit or credit card',
                                   color: AppColors.info,
-                                  onTap: () => _showCardSheet(context),
+                                  onTap: () => _showComingSoonPaymentSheet(
+                                    context,
+                                    'Visa / Mastercard',
+                                    Icons.credit_card,
+                                    AppColors.info,
+                                  ),
                                 ),
                                 const _HDivider(),
                                 _PaymentTile(
-                                  logo: '🏦',
+                                  icon: Icons.account_balance,
                                   name: 'Bank Transfer',
                                   subtitle: 'Stanbic · DFCU · Centenary Bank',
                                   color: AppColors.success,
-                                  onTap: () => _showPaymentSheet(
+                                  onTap: () => _showComingSoonPaymentSheet(
                                     context,
                                     'Bank Transfer',
-                                    'Enter bank account number',
+                                    Icons.account_balance,
                                     AppColors.success,
                                   ),
                                 ),
@@ -1172,43 +1068,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 _SettingsTile(
                                   icon: Icons.dark_mode_outlined,
                                   label: 'Dark Mode',
+                                  subtitle: 'Coming soon',
                                   color: AppColors.success,
-                                  trailing: Switch(
-                                    value: _darkMode,
+                                  trailing: const Switch(
+                                    value: false,
+                                    onChanged: null,
                                     activeThumbColor: AppColors.success,
-                                    onChanged: (v) =>
-                                        setState(() => _darkMode = v),
                                   ),
                                 ),
                                 const _HDivider(),
                                 _SettingsTile(
                                   icon: Icons.language_outlined,
                                   label: 'Language',
+                                  subtitle:
+                                      'English is the only language available right now',
                                   color: AppColors.success,
-                                  trailing: DropdownButton<String>(
-                                    value: _language,
-                                    underline: const SizedBox(),
-                                    style: const TextStyle(
+                                  trailing: const Text(
+                                    'English',
+                                    style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w700,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                    items: const [
-                                      DropdownMenuItem(
-                                        value: 'English',
-                                        child: Text('English'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'Luganda',
-                                        child: Text('Luganda'),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: 'Swahili',
-                                        child: Text('Swahili'),
-                                      ),
-                                    ],
-                                    onChanged: (v) => setState(
-                                      () => _language = v ?? 'English',
+                                      color: AppColors.textMuted,
                                     ),
                                   ),
                                 ),
@@ -1253,7 +1133,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   onTap: () => ScaffoldMessenger.of(context)
                                       .showSnackBar(
                                         const SnackBar(
-                                          content: Text('Opening live chat...'),
+                                          content: Text('Coming soon'),
                                         ),
                                       ),
                                 ),
@@ -1719,14 +1599,14 @@ class _MenuTile extends StatelessWidget {
 // ── Payment Tile ──────────────────────────────────────────────────────────────
 
 class _PaymentTile extends StatelessWidget {
-  final String logo;
+  final IconData icon;
   final String name;
   final String subtitle;
   final Color color;
   final VoidCallback onTap;
 
   const _PaymentTile({
-    required this.logo,
+    required this.icon,
     required this.name,
     required this.subtitle,
     required this.color,
@@ -1752,7 +1632,7 @@ class _PaymentTile extends StatelessWidget {
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Center(
-                  child: Text(logo, style: const TextStyle(fontSize: 24)),
+                  child: Icon(icon, color: color, size: 24),
                 ),
               ),
               const SizedBox(width: 16),
@@ -1797,6 +1677,7 @@ class _PaymentTile extends StatelessWidget {
 class _SettingsTile extends StatelessWidget {
   final IconData icon;
   final String label;
+  final String? subtitle;
   final Color color;
   final Widget? trailing;
   final VoidCallback? onTap;
@@ -1805,6 +1686,7 @@ class _SettingsTile extends StatelessWidget {
   const _SettingsTile({
     required this.icon,
     required this.label,
+    this.subtitle,
     required this.color,
     this.trailing,
     this.onTap,
@@ -1833,13 +1715,28 @@ class _SettingsTile extends StatelessWidget {
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: labelColor ?? AppColors.textPrimary,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: labelColor ?? AppColors.textPrimary,
+                      ),
+                    ),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle!,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
               ?trailing,

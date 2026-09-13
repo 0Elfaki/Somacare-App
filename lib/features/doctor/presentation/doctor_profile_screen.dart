@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../theme/app_theme.dart';
+import '../../../widgets/app_ui.dart';
 
 class DoctorProfileScreen extends StatefulWidget {
   const DoctorProfileScreen({super.key});
@@ -19,6 +20,10 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
   bool _isEditing = false;
   bool _isSaving = false;
   String? _profileImageBase64;
+  // Session-only: no local-storage or backend column is wired up for this
+  // yet, so it doesn't survive an app restart, but it's a real toggle now
+  // rather than a switch that silently ignored every tap.
+  bool _notificationsEnabled = true;
 
   final _nameCtrl = TextEditingController();
   final _specializationCtrl = TextEditingController();
@@ -107,7 +112,7 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✅ Profile updated'),
+            content: Text('Profile updated'),
             backgroundColor: AppColors.success,
           ),
         );
@@ -171,78 +176,160 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
         initialChildSize: 0.7,
         minChildSize: 0.5,
         maxChildSize: 0.9,
-        builder: (_, controller) => Container(
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: ListView(
-            controller: controller,
-            padding: const EdgeInsets.all(24),
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.textMuted,
-                    borderRadius: BorderRadius.circular(2),
+        builder: (_, controller) => StatefulBuilder(
+          builder: (sheetCtx, setModalState) => Container(
+            decoration: const BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: ListView(
+              controller: controller,
+              padding: const EdgeInsets.all(24),
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.textMuted,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Settings',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.textPrimary,
+                const SizedBox(height: 20),
+                const Text(
+                  'Settings',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              _SettingsTile(
-                icon: Icons.notifications_outlined,
-                title: 'Notifications',
-                subtitle: 'Manage notification preferences',
-                trailing: Switch(
-                  value: true,
-                  onChanged: (v) {},
-                  activeThumbColor: AppColors.primary,
+                const SizedBox(height: 24),
+                _SettingsTile(
+                  icon: Icons.notifications_outlined,
+                  title: 'Notifications',
+                  subtitle: 'Manage notification preferences',
+                  trailing: Switch(
+                    value: _notificationsEnabled,
+                    onChanged: (v) =>
+                        setModalState(() => _notificationsEnabled = v),
+                    activeThumbColor: AppColors.primary,
+                  ),
                 ),
-              ),
-              _SettingsTile(
-                icon: Icons.dark_mode_outlined,
-                title: 'Dark Mode',
-                subtitle: 'Switch between light and dark theme',
-                trailing: Switch(
-                  value: false,
-                  onChanged: (v) {},
-                  activeThumbColor: AppColors.primary,
+                _SettingsTile(
+                  icon: Icons.dark_mode_outlined,
+                  title: 'Dark Mode',
+                  subtitle: 'Coming soon',
+                  trailing: const Switch(
+                    value: false,
+                    onChanged: null,
+                    activeThumbColor: AppColors.primary,
+                  ),
                 ),
-              ),
-              _SettingsTile(
-                icon: Icons.language_outlined,
-                title: 'Language',
-                subtitle: 'English',
-                onTap: () {},
-              ),
-              _SettingsTile(
-                icon: Icons.lock_outline,
-                title: 'Privacy',
-                subtitle: 'Manage your data and privacy',
-                onTap: () {},
-              ),
-              _SettingsTile(
-                icon: Icons.security_outlined,
-                title: 'Security',
-                subtitle: 'Password and authentication',
-                onTap: () {},
-              ),
-            ],
+                _SettingsTile(
+                  icon: Icons.language_outlined,
+                  title: 'Language',
+                  subtitle: 'English',
+                  onTap: () => _showInfoDialog(
+                    sheetCtx,
+                    icon: Icons.language_outlined,
+                    title: 'Language',
+                    message:
+                        'English is currently the only supported language. '
+                        'More languages are planned for a future update.',
+                  ),
+                ),
+                _SettingsTile(
+                  icon: Icons.lock_outline,
+                  title: 'Privacy',
+                  subtitle: 'Manage your data and privacy',
+                  onTap: () => _showInfoDialog(
+                    sheetCtx,
+                    icon: Icons.lock_outline,
+                    title: 'Privacy',
+                    message:
+                        'For questions about how your data is collected, '
+                        'used, and protected, contact your clinical '
+                        'director or campus IT. The in-app privacy policy '
+                        'viewer isn't available yet.',
+                  ),
+                ),
+                _SettingsTile(
+                  icon: Icons.security_outlined,
+                  title: 'Security',
+                  subtitle: 'Password and authentication',
+                  onTap: () => _sendPasswordReset(sheetCtx),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+  void _showInfoDialog(
+    BuildContext dialogContext, {
+    required IconData icon,
+    required String title,
+    required String message,
+  }) {
+    showDialog(
+      context: dialogContext,
+      builder: (ctx) => AlertDialog(
+        shape: const RoundedRectangleBorder(borderRadius: AppRadius.lgAll),
+        title: Row(
+          children: [
+            Icon(icon, color: AppColors.primary),
+            const SizedBox(width: 12),
+            Text(title),
+          ],
+        ),
+        content: Text(
+          message,
+          style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The "Security" settings tile doesn't have a real change-password screen
+  /// to link to, so this sends a genuine Supabase password-reset email to
+  /// the signed-in doctor's own address instead of doing nothing.
+  Future<void> _sendPasswordReset(BuildContext dialogContext) async {
+    final email = Supabase.instance.client.auth.currentUser?.email;
+    if (email == null) return;
+    try {
+      await Supabase.instance.client.auth.resetPasswordForEmail(email);
+      if (!dialogContext.mounted) return;
+      _showInfoDialog(
+        dialogContext,
+        icon: Icons.security_outlined,
+        title: 'Security',
+        message:
+            'A password reset link has been sent to $email. Follow it to '
+            'set a new password.',
+      );
+    } catch (e) {
+      if (!dialogContext.mounted) return;
+      _showInfoDialog(
+        dialogContext,
+        icon: Icons.error_outline,
+        title: 'Security',
+        message: userFriendlyErrorMessage(
+          e,
+          defaultMessage:
+              'Could not send the password reset email. Please try again.',
+        ),
+      );
+    }
   }
 
   void _showHelpDialog() {
@@ -266,11 +353,29 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
               style: TextStyle(color: AppColors.textSecondary),
             ),
             SizedBox(height: 16),
-            Text('📧 Email: support@somacare.com'),
-            SizedBox(height: 8),
-            Text('📞 Phone: +1 234 567 890'),
-            SizedBox(height: 8),
-            Text('💬 Chat: Available 24/7'),
+            Row(
+              children: [
+                Icon(Icons.mail_outline, size: 16, color: AppColors.textSecondary),
+                SizedBox(width: 10),
+                Text('Email: support@somacare.ug'),
+              ],
+            ),
+            SizedBox(height: 10),
+            Row(
+              children: [
+                Icon(Icons.call_outlined, size: 16, color: AppColors.textSecondary),
+                SizedBox(width: 10),
+                Text('Phone: +1 234 567 890'),
+              ],
+            ),
+            SizedBox(height: 10),
+            Row(
+              children: [
+                Icon(Icons.chat_bubble_outline, size: 16, color: AppColors.textSecondary),
+                SizedBox(width: 10),
+                Text('Chat: Available 24/7'),
+              ],
+            ),
           ],
         ),
         actions: [

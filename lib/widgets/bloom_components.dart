@@ -73,7 +73,7 @@ class BloomButton extends StatelessWidget {
     this.onPressed,
     this.variant = BloomButtonVariant.primary,
     this.isLoading = false,
-    this.height = 42,
+    this.height = 48,
     this.icon,
   });
 

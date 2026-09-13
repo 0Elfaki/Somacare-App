@@ -110,6 +110,7 @@ class _MyMedicationsScreenState extends ConsumerState<MyMedicationsScreen>
 
   void _showAddReminderDialog(Medication medication) {
     TimeOfDay selectedTime = const TimeOfDay(hour: 8, minute: 0);
+    bool isSaving = false;
 
     showModalBottomSheet(
       context: context,
@@ -160,17 +161,19 @@ class _MyMedicationsScreenState extends ConsumerState<MyMedicationsScreen>
                 ),
                 const SizedBox(height: 12),
                 GestureDetector(
-                  onTap: () async {
-                    final time = await showTimePicker(
-                      context: context,
-                      initialTime: selectedTime,
-                    );
-                    if (time != null) {
-                      setModalState(() {
-                        selectedTime = time;
-                      });
-                    }
-                  },
+                  onTap: isSaving
+                      ? null
+                      : () async {
+                          final time = await showTimePicker(
+                            context: context,
+                            initialTime: selectedTime,
+                          );
+                          if (time != null) {
+                            setModalState(() {
+                              selectedTime = time;
+                            });
+                          }
+                        },
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -200,18 +203,34 @@ class _MyMedicationsScreenState extends ConsumerState<MyMedicationsScreen>
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
-                      // Add reminder logic here
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Reminder set for ${selectedTime.format(context)}',
-                          ),
-                          backgroundColor: AppColors.success,
-                        ),
-                      );
-                    },
+                    onPressed: isSaving
+                        ? null
+                        : () async {
+                            setModalState(() => isSaving = true);
+                            final ok = await ref
+                                .read(medicationProvider.notifier)
+                                .addReminder(
+                                  medication.id,
+                                  MedicationReminder(
+                                    id: '',
+                                    time: selectedTime,
+                                    isEnabled: true,
+                                  ),
+                                );
+                            if (!context.mounted) return;
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  ok
+                                      ? 'Reminder set for ${selectedTime.format(context)}'
+                                      : 'Could not save the reminder. Please try again.',
+                                ),
+                                backgroundColor:
+                                    ok ? AppColors.success : AppColors.error,
+                              ),
+                            );
+                          },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
@@ -220,7 +239,16 @@ class _MyMedicationsScreenState extends ConsumerState<MyMedicationsScreen>
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text('Save Reminder'),
+                    child: isSaving
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text('Save Reminder'),
                   ),
                 ),
               ],

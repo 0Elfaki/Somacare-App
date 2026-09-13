@@ -95,7 +95,7 @@ class _SchoolSelectionScreenState extends State<SchoolSelectionScreen> {
         setState(() => _isSaving = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ Failed: $e'),
+            content: Text('Failed: $e'),
             backgroundColor: AppColors.error,
           ),
         );

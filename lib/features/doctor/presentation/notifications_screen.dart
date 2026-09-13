@@ -35,9 +35,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         userId,
       );
 
-      // Mark all as read
-      await NotificationService.markAllAsRead(userId);
-
       if (mounted) {
         setState(() {
           _notifications = notifications;
@@ -76,6 +73,20 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
           title: const Text('Notifications'),
           actions: [
+            if (_notifications.any(
+              (n) => !((n['is_read'] as bool?) ?? false),
+            ))
+              TextButton(
+                onPressed: _markAllAsRead,
+                child: const Text(
+                  'Mark all read',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
             IconButton(
               icon: const Icon(Icons.refresh_rounded),
               onPressed: _loadNotifications,
@@ -125,13 +136,38 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
-  void _handleNotificationTap(Map<String, dynamic> notification) {
+  Future<void> _handleNotificationTap(
+    Map<String, dynamic> notification,
+  ) async {
+    final id = notification['id']?.toString();
+    final wasUnread = !((notification['is_read'] as bool?) ?? false);
+    if (id != null && wasUnread) {
+      await NotificationService.markAsRead(id);
+      if (mounted) {
+        setState(() => notification['is_read'] = true);
+      }
+    }
+
     final type = notification['type'] as String?;
     final data = notification['data'] as Map<String, dynamic>? ?? {};
 
     // Navigate based on notification type
     if (type == 'booking' || type == 'emergency') {
+      if (!mounted) return;
       context.push('/appointment-detail', extra: data);
+    }
+  }
+
+  Future<void> _markAllAsRead() async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return;
+    await NotificationService.markAllAsRead(userId);
+    if (mounted) {
+      setState(() {
+        for (final n in _notifications) {
+          n['is_read'] = true;
+        }
+      });
     }
   }
 }

@@ -6,17 +6,15 @@ import '../data/message_model.dart';
 import '../data/message_repository.dart';
 import '../../../theme/app_theme.dart';
 
-/// Text-messaging screen between a student and their doctor, matching the
-/// "Dr. Sarah Martinez" chat design — bubbles, an attached image, a voice
-/// note, and a live typing indicator.
+/// Text-messaging screen between a student and their doctor — bubbles, an
+/// attached image, a voice note, and a live typing indicator.
 ///
-/// When [doctorId] is known (e.g. opened from a confirmed appointment) and
-/// the student is signed in, the thread is loaded from and persisted to
-/// the `messages` Supabase table in realtime (see
-/// `lib/features/student/data/create_messages.sql`). Otherwise — e.g. when
-/// opened from the dashboard's "Message Doctor" quick action with no
-/// specific doctor picked yet — it falls back to a local demo thread so the
-/// screen still has something to show.
+/// Requires [doctorId]: with a signed-in student and a known doctor, the
+/// thread is loaded from and persisted to the `messages` Supabase table in
+/// realtime (see `lib/features/student/data/create_messages.sql`). If
+/// [doctorId] is missing — this screen was reached without a specific
+/// doctor to message — it shows a prompt to pick one from a confirmed
+/// appointment rather than fabricating a conversation.
 class MessagingChatScreen extends StatefulWidget {
   final String doctorName;
   final String doctorSpecialty;
@@ -25,7 +23,7 @@ class MessagingChatScreen extends StatefulWidget {
 
   const MessagingChatScreen({
     super.key,
-    this.doctorName = 'Dr. Sarah Martinez',
+    this.doctorName = 'Your doctor',
     this.doctorSpecialty = 'General Physician',
     this.doctorId,
     this.appointmentId,
@@ -42,7 +40,6 @@ class _MessagingChatScreenState extends State<MessagingChatScreen> {
   final Set<String> _seenIds = {};
   bool _isTyping = false;
   bool _isLoading = false;
-  Timer? _replyTimer;
   RealtimeChannel? _channel;
 
   String? get _studentId => Supabase.instance.client.auth.currentUser?.id;
@@ -56,58 +53,7 @@ class _MessagingChatScreenState extends State<MessagingChatScreen> {
     super.initState();
     if (_isLive) {
       _loadLiveThread();
-    } else {
-      _loadDemoThread();
     }
-  }
-
-  void _loadDemoThread() {
-    _messages.addAll([
-      const _ChatMessage(
-        isMe: true,
-        type: _MessageType.text,
-        text:
-            "Hi Dr. Martinez, I've been experiencing headaches more frequently this week.",
-        time: '9:30 AM',
-      ),
-      const _ChatMessage(
-        isMe: false,
-        type: _MessageType.text,
-        text:
-            'I\'m sorry to hear that. Can you tell me more about when they occur and how severe they are?',
-        time: '9:31 AM',
-      ),
-      const _ChatMessage(
-        isMe: true,
-        type: _MessageType.text,
-        text:
-            'They usually happen in the afternoon and can last for a few hours. Here\'s an image from this morning.',
-        time: '9:32 AM',
-      ),
-      const _ChatMessage(
-        isMe: true,
-        type: _MessageType.image,
-        time: '9:32 AM',
-      ),
-      const _ChatMessage(
-        isMe: false,
-        type: _MessageType.text,
-        text: 'Thank you. I reviewed the image. Here\'s a quick note for you.',
-        time: '9:33 AM',
-      ),
-      const _ChatMessage(
-        isMe: false,
-        type: _MessageType.voice,
-        time: '9:33 AM',
-        durationLabel: '0:28',
-      ),
-      const _ChatMessage(
-        isMe: true,
-        type: _MessageType.text,
-        text: 'Thank you, that helps!',
-        time: '9:34 AM',
-      ),
-    ]);
   }
 
   Future<void> _loadLiveThread() async {
@@ -154,7 +100,6 @@ class _MessagingChatScreenState extends State<MessagingChatScreen> {
 
   @override
   void dispose() {
-    _replyTimer?.cancel();
     _channel?.unsubscribe();
     _ctrl.dispose();
     _scrollCtrl.dispose();
@@ -174,39 +119,11 @@ class _MessagingChatScreenState extends State<MessagingChatScreen> {
   }
 
   void _send() {
+    if (!_isLive) return;
     final text = _ctrl.text.trim();
     if (text.isEmpty) return;
     _ctrl.clear();
-
-    if (_isLive) {
-      _sendLive(text);
-      return;
-    }
-
-    setState(() {
-      _messages.add(_ChatMessage(isMe: true, type: _MessageType.text, text: text, time: _now()));
-    });
-    _scrollToBottom();
-
-    // Simulate the doctor seeing the message and replying, so the thread
-    // feels alive without requiring a backend for this screen.
-    setState(() => _isTyping = true);
-    _replyTimer?.cancel();
-    _replyTimer = Timer(const Duration(milliseconds: 1600), () {
-      if (!mounted) return;
-      setState(() {
-        _isTyping = false;
-        _messages.add(
-          const _ChatMessage(
-            isMe: false,
-            type: _MessageType.text,
-            text: "Got it — noted. Let's keep an eye on that.",
-            time: '',
-          ),
-        );
-      });
-      _scrollToBottom();
-    });
+    _sendLive(text);
   }
 
   Future<void> _sendLive(String text) async {
@@ -238,13 +155,6 @@ class _MessagingChatScreenState extends State<MessagingChatScreen> {
       });
     }
     _scrollToBottom();
-  }
-
-  String _now() {
-    final now = TimeOfDay.now();
-    final h = now.hourOfPeriod == 0 ? 12 : now.hourOfPeriod;
-    final m = now.minute.toString().padLeft(2, '0');
-    return '$h:$m ${now.period == DayPeriod.am ? 'AM' : 'PM'}';
   }
 
   @override
@@ -307,28 +217,29 @@ class _MessagingChatScreenState extends State<MessagingChatScreen> {
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 7,
-                        height: 7,
-                        decoration: const BoxDecoration(
-                          color: AppColors.success,
-                          shape: BoxShape.circle,
+                  if (_isLive)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 7,
+                          height: 7,
+                          decoration: const BoxDecoration(
+                            color: AppColors.success,
+                            shape: BoxShape.circle,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 4),
-                      const Text(
-                        'Online',
-                        style: TextStyle(
-                          color: AppColors.success,
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
+                        const SizedBox(width: 4),
+                        const Text(
+                          'Online',
+                          style: TextStyle(
+                            color: AppColors.success,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
                 ],
               ),
             ),
@@ -338,10 +249,12 @@ class _MessagingChatScreenState extends State<MessagingChatScreen> {
           IconButton(
             icon: const Icon(Icons.videocam_outlined, color: AppColors.textSecondary),
             tooltip: 'Start video call',
-            onPressed: () => context.push(
-              '/consult',
-              extra: {'doctorName': widget.doctorName},
-            ),
+            onPressed: _isLive
+                ? () => context.push(
+                      '/consult',
+                      extra: {'doctorName': widget.doctorName},
+                    )
+                : null,
           ),
           IconButton(
             tooltip: 'More options',
@@ -354,112 +267,198 @@ class _MessagingChatScreenState extends State<MessagingChatScreen> {
           child: Container(height: 1, color: AppColors.surfaceMuted),
         ),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: AppColors.primaryLight),
-                  )
-                : ListView.builder(
-                    controller: _scrollCtrl,
-                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-                    itemCount: _messages.length + (_isTyping ? 1 : 0),
-                    itemBuilder: (context, i) {
-                      if (_isTyping && i == _messages.length) {
-                        return _DoctorTypingRow(doctorName: widget.doctorName);
-                      }
-                      return _MessageBubble(msg: _messages[i]);
-                    },
-                  ),
-          ),
-
-          // ── Input bar ──────────────────────────────────
-          Container(
-            padding: EdgeInsets.fromLTRB(
-              12,
-              10,
-              12,
-              MediaQuery.of(context).padding.bottom + 10,
-            ),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              border: Border(top: BorderSide(color: AppColors.surfaceMuted)),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
+      body: !_isLive
+          ? _NoDoctorSelected(
+              onPickDoctor: () => context.canPop()
+                  ? context.pop()
+                  : context.go('/my-appointments'),
+            )
+          : Column(
               children: [
                 Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    decoration: BoxDecoration(
-                      color: AppColors.pageBg,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _ctrl,
-                            maxLines: 4,
-                            minLines: 1,
-                            textCapitalization: TextCapitalization.sentences,
-                            decoration: const InputDecoration(
-                              hintText: 'Type a message...',
-                              hintStyle: TextStyle(color: AppColors.textMuted),
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 10,
-                              ),
-                            ),
-                            onSubmitted: (_) => _send(),
+                  child: _isLoading
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.primaryLight,
                           ),
+                        )
+                      : ListView.builder(
+                          controller: _scrollCtrl,
+                          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                          itemCount: _messages.length + (_isTyping ? 1 : 0),
+                          itemBuilder: (context, i) {
+                            if (_isTyping && i == _messages.length) {
+                              return _DoctorTypingRow(
+                                doctorName: widget.doctorName,
+                              );
+                            }
+                            return _MessageBubble(msg: _messages[i]);
+                          },
                         ),
-                        IconButton(
-                          tooltip: 'Attach a file',
-                          icon: const Icon(
-                            Icons.attach_file,
-                            color: AppColors.textSecondary,
-                            size: 20,
-                          ),
-                          onPressed: () {},
-                        ),
-                        IconButton(
-                          tooltip: 'Take a photo',
-                          icon: const Icon(
-                            Icons.camera_alt_outlined,
-                            color: AppColors.textSecondary,
-                            size: 20,
-                          ),
-                          onPressed: () {},
-                        ),
-                      ],
+                ),
+
+                // ── Input bar ──────────────────────────────────
+                Container(
+                  padding: EdgeInsets.fromLTRB(
+                    12,
+                    10,
+                    12,
+                    MediaQuery.of(context).padding.bottom + 10,
+                  ),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    border: Border(
+                      top: BorderSide(color: AppColors.surfaceMuted),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: _send,
-                  child: Container(
-                    width: 46,
-                    height: 46,
-                    decoration: const BoxDecoration(
-                      color: AppColors.primaryLight,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.send_rounded,
-                      color: Colors.white,
-                      size: 20,
-                    ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          decoration: BoxDecoration(
+                            color: AppColors.pageBg,
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: _ctrl,
+                                  maxLines: 4,
+                                  minLines: 1,
+                                  textCapitalization:
+                                      TextCapitalization.sentences,
+                                  decoration: const InputDecoration(
+                                    hintText: 'Type a message...',
+                                    hintStyle: TextStyle(
+                                      color: AppColors.textMuted,
+                                    ),
+                                    border: InputBorder.none,
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 10,
+                                    ),
+                                  ),
+                                  onSubmitted: (_) => _send(),
+                                ),
+                              ),
+                              IconButton(
+                                tooltip: 'Attach a file',
+                                icon: const Icon(
+                                  Icons.attach_file,
+                                  color: AppColors.textSecondary,
+                                  size: 20,
+                                ),
+                                onPressed: () {},
+                              ),
+                              IconButton(
+                                tooltip: 'Take a photo',
+                                icon: const Icon(
+                                  Icons.camera_alt_outlined,
+                                  color: AppColors.textSecondary,
+                                  size: 20,
+                                ),
+                                onPressed: () {},
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: _send,
+                        child: Container(
+                          width: 46,
+                          height: 46,
+                          decoration: const BoxDecoration(
+                            color: AppColors.primaryLight,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.send_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-          ),
-        ],
+    );
+  }
+}
+
+// ── No doctor selected ───────────────────────────────────────────────────────
+
+class _NoDoctorSelected extends StatelessWidget {
+  final VoidCallback onPickDoctor;
+  const _NoDoctorSelected({required this.onPickDoctor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceMuted,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.chat_bubble_outline_rounded,
+                color: AppColors.textMuted,
+                size: 32,
+              ),
+            ),
+            const SizedBox(height: 18),
+            const Text(
+              'No conversation yet',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Messaging opens from a confirmed appointment. Pick a doctor from your appointments to start a conversation.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              height: 44,
+              child: ElevatedButton(
+                onPressed: onPickDoctor,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Text(
+                  'Go to my appointments',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -36,8 +36,38 @@ class PaymentScreen extends StatefulWidget {
 class _PaymentScreenState extends State<PaymentScreen> {
   _PayMethod _method = _PayMethod.mtn;
   bool _isPaying = false;
+  final _phoneCtrl = TextEditingController();
 
   int get _total => widget.consultFee + widget.platformFee;
+
+  /// A mobile-money phone number good enough to attempt a charge with:
+  /// digits only, a plausible local-number length once the leading 0 (if
+  /// any) is dropped for the +256 prefix shown next to the field.
+  bool get _hasValidPhone {
+    final digits = _phoneCtrl.text.replaceAll(RegExp(r'[^0-9]'), '');
+    final local = digits.startsWith('0') ? digits.substring(1) : digits;
+    return local.length >= 9;
+  }
+
+  /// Card payments need a vetted card-entry SDK (Stripe Elements or
+  /// equivalent) rather than a hand-rolled card form — that integration
+  /// isn't wired up yet, so card is disabled here rather than accepting a
+  /// "payment" with no card details actually collected.
+  bool get _canPay {
+    switch (_method) {
+      case _PayMethod.mtn:
+      case _PayMethod.airtel:
+        return _hasValidPhone;
+      case _PayMethod.card:
+        return false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _phoneCtrl.dispose();
+    super.dispose();
+  }
 
   String _fmtUgx(int v) {
     final s = v.toString();
@@ -50,14 +80,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   Future<void> _pay() async {
-    if (_isPaying) return;
+    if (_isPaying || !_canPay) return;
     setState(() => _isPaying = true);
     try {
       await widget.onConfirm();
       if (!mounted) return;
       showAppSnack(
         context,
-        'Payment successful — appointment booked!',
+        'Payment successful. Appointment booked!',
         tone: AppStatusTone.success,
       );
       context.go('/my-appointments');
@@ -105,7 +135,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           ),
                           const SizedBox(height: 10),
                           _SummaryRow(
-                            label: '${widget.doctorName} — consult',
+                            label: '${widget.doctorName} · consult',
                             value: _fmtUgx(widget.consultFee),
                           ),
                           const SizedBox(height: 6),
@@ -169,6 +199,89 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         ],
                       ),
                     ),
+                    if (_method == _PayMethod.mtn ||
+                        _method == _PayMethod.airtel) ...[
+                      const BloomSectionTitle('Mobile money number'),
+                      BloomCard(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              '+256',
+                              style: BloomTextStyles.inter(
+                                size: 13,
+                                weight: FontWeight.w600,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Container(width: 1, height: 20, color: AppColors.border),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: TextField(
+                                controller: _phoneCtrl,
+                                keyboardType: TextInputType.phone,
+                                onChanged: (_) => setState(() {}),
+                                decoration: InputDecoration(
+                                  isDense: true,
+                                  border: InputBorder.none,
+                                  hintText: '7XX XXX XXX',
+                                  hintStyle: BloomTextStyles.inter(
+                                    size: 13,
+                                    color: AppColors.textMuted,
+                                  ),
+                                ),
+                                style: BloomTextStyles.inter(
+                                  size: 13,
+                                  weight: FontWeight.w500,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (_phoneCtrl.text.isNotEmpty && !_hasValidPhone) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          'Enter the number the mobile money prompt should go to.',
+                          style: BloomTextStyles.inter(
+                            size: 11.5,
+                            color: AppColors.error,
+                          ),
+                        ),
+                      ],
+                    ],
+                    if (_method == _PayMethod.card) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppColors.warningSurface,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(
+                              Icons.info_outline,
+                              size: 18,
+                              color: AppColors.warningDark,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Card payments aren\'t available yet. Please pay with MTN or Airtel Money for now.',
+                                style: BloomTextStyles.inter(
+                                  size: 12,
+                                  color: AppColors.warningDark,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -184,7 +297,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
               child: BloomButton(
                 label: _isPaying ? 'Processing…' : 'Pay ${_fmtUgx(_total)}',
                 isLoading: _isPaying,
-                onPressed: _isPaying ? null : _pay,
+                onPressed: (_isPaying || !_canPay) ? null : _pay,
               ),
             ),
           ],

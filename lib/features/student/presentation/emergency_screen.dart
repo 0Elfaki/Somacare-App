@@ -91,7 +91,7 @@ class _EmergencyScreenState extends State<EmergencyScreen>
     _FirstAidTip(
       icon: Icons.bug_report,
       title: 'Malaria Emergency',
-      summary: 'High fever, convulsions, confusion — seek care immediately.',
+      summary: 'High fever, convulsions, confusion. Seek care immediately.',
       detail:
           'Cerebral malaria is life-threatening, especially in children under 5. '
           'Signs include high fever (≥ 39 °C), repeated convulsions, unusual '
@@ -99,7 +99,7 @@ class _EmergencyScreenState extends State<EmergencyScreen>
           '• Give paracetamol to reduce fever (NOT aspirin for children).\n'
           '• Sponge the body with lukewarm water.\n'
           '• If the person is convulsing, lay them on their side and clear the '
-          'airway — do NOT put anything in their mouth.\n'
+          'airway. Do NOT put anything in their mouth.\n'
           '• Rush to the nearest Health Centre IV or Regional Referral Hospital '
           'for IV artesunate treatment.',
       color: AppColors.warning,
@@ -108,7 +108,7 @@ class _EmergencyScreenState extends State<EmergencyScreen>
       icon: Icons.water_drop,
       title: 'Cholera / Diarrhoea',
       summary:
-          'Rehydrate with ORS — 6 teaspoons sugar, ½ teaspoon salt per litre.',
+          'Rehydrate with ORS: 6 teaspoons sugar, ½ teaspoon salt per litre.',
       detail:
           'Acute watery diarrhoea can kill within hours through dehydration.\n\n'
           'Prepare ORS at home:\n'
@@ -130,11 +130,11 @@ class _EmergencyScreenState extends State<EmergencyScreen>
       detail:
           'Uganda has several venomous species (black mamba, puff adder, '
           'spitting cobra). Quick action saves lives.\n\n'
-          '• Keep the victim calm and still — movement spreads venom faster.\n'
+          '• Keep the victim calm and still. Movement spreads venom faster.\n'
           '• Immobilise the bitten limb with a splint; keep it below heart level.\n'
           '• Remove rings, watches, or tight clothing near the bite.\n'
           '• Do NOT cut the wound, suck the venom, or apply a tourniquet.\n'
-          '• Do NOT apply herbs or traditional remedies — they delay treatment.\n'
+          '• Do NOT apply herbs or traditional remedies. They delay treatment.\n'
           '• Transport to a hospital with anti-venom (Regional Referral Hospital '
           'or Mulago National Referral Hospital).\n'
           '• Note the snake\'s appearance if possible to help doctors choose '
@@ -147,7 +147,7 @@ class _EmergencyScreenState extends State<EmergencyScreen>
       summary: 'Secure the scene, call 911, do not move spinal injuries.',
       detail:
           'Uganda has one of the highest road traffic accident rates in Africa.\n\n'
-          '• Ensure your own safety first — move away from traffic.\n'
+          '• Ensure your own safety first. Move away from traffic.\n'
           '• Call 911 (KCCA Ambulance) or 999 (Police) immediately.\n'
           '• Do NOT move a victim who may have a spinal injury unless they are '
           'in immediate danger (fire, oncoming traffic).\n'
@@ -171,7 +171,7 @@ class _EmergencyScreenState extends State<EmergencyScreen>
           '• Apply cool wet cloths to the neck, armpits, and forehead.\n'
           '• Give small sips of clean water or ORS.\n'
           '• If the person stops sweating, becomes confused, or loses '
-          'consciousness — this is heatstroke. Call 911 and cool them '
+          'consciousness. This is heatstroke. Call 911 and cool them '
           'aggressively while waiting for help.',
       color: AppColors.warning,
     ),
@@ -181,16 +181,16 @@ class _EmergencyScreenState extends State<EmergencyScreen>
       summary: 'Know when to visit a health centre vs. a referral hospital.',
       detail:
           'Uganda\'s health system has different facility levels:\n\n'
-          '• HC II — Basic outpatient care, first aid, health education. '
+          '• HC II: Basic outpatient care, first aid, health education. '
           'Visit for minor illnesses, wound dressing, malaria testing.\n\n'
-          '• HC III — Has a laboratory and maternity ward. Visit for lab '
+          '• HC III: Has a laboratory and maternity ward. Visit for lab '
           'tests, uncomplicated deliveries, and moderate illness.\n\n'
-          '• HC IV — Has a theatre (operating room) and can handle '
+          '• HC IV: Has a theatre (operating room) and can handle '
           'emergencies, caesarean sections, and blood transfusions.\n\n'
-          '• Regional Referral Hospital — Specialist doctors, ICU, '
+          '• Regional Referral Hospital: Specialist doctors, ICU, '
           'advanced diagnostics. Go here for severe trauma, surgical '
           'emergencies, snakebite anti-venom, and cerebral malaria.\n\n'
-          '• National Referral (Mulago / Kiruddu / Kawempe) — Highest '
+          '• National Referral (Mulago / Kiruddu / Kawempe): Highest '
           'level of care for the most complex cases.',
       color: AppColors.primary,
     ),
@@ -377,39 +377,17 @@ class _EmergencyScreenState extends State<EmergencyScreen>
                   children: [
                     const BloomMapPlaceholder(height: 140),
                     const SizedBox(height: 10),
-                    GestureDetector(
-                      onTap: () =>
-                          _showSnackBar('Using your current location.'),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.my_location,
-                              size: 13,
-                              color: Colors.white,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Use current location',
-                              style: BloomTextStyles.inter(
-                                size: 10.5,
-                                weight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                    // The "Use current location" chip that lived here only
+                    // showed a fake success toast — it never requested
+                    // location permission or read a real position, and this
+                    // map is a static placeholder with nowhere to plot a pin
+                    // anyway. Removed rather than left lying to the user;
+                    // "Find Nearest Hospital" below already does something
+                    // real (opens a live map search). Wiring true device
+                    // location back in needs a geolocation package in the
+                    // project (e.g. geolocator) plus a real map surface —
+                    // flagging for a product/dependency decision rather than
+                    // guessing at a package that may not be in pubspec.yaml.
                     const BloomSectionTitle("What's happening?"),
                     Container(
                       decoration: BoxDecoration(
@@ -483,7 +461,7 @@ class _EmergencyScreenState extends State<EmergencyScreen>
               const SizedBox(height: 8),
               ..._contacts.map(_buildContactCard),
               const SizedBox(height: 24),
-              _buildSectionTitle('First Aid — Uganda Health Context'),
+              _buildSectionTitle('First Aid: Uganda Health Context'),
               const SizedBox(height: 8),
               _buildFirstAidGrid(),
               const SizedBox(height: 24),
@@ -531,7 +509,7 @@ class _EmergencyScreenState extends State<EmergencyScreen>
           ),
           const SizedBox(height: 4),
           Text(
-            'KCCA Ambulance — Dial 911',
+            'KCCA Ambulance: Dial 911',
             style: BloomTextStyles.inter(
               size: 12,
               color: Colors.white.withValues(alpha: 0.85),

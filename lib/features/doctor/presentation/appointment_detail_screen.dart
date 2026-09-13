@@ -94,6 +94,38 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
     }
   }
 
+  Future<void> _confirmAndUpdateStatus(String newStatus) async {
+    if (newStatus == 'cancelled') {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Cancel this appointment?'),
+          content: const Text(
+            'The patient will be notified. This cannot be undone.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Keep appointment'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.error,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Cancel appointment'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+    }
+    await _updateStatus(newStatus);
+  }
+
   Future<void> _updateStatus(String newStatus) async {
     try {
       final id = _appointment['id'] as String?;
@@ -330,7 +362,7 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
                                             .toList(),
                                         onChanged: (val) {
                                           if (val != null && val != status) {
-                                            _updateStatus(val);
+                                            _confirmAndUpdateStatus(val);
                                           }
                                         },
                                       ),
@@ -406,7 +438,7 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
                                 width: 140,
                                 child: BloomButton(
                                   label: 'Save notes',
-                                  height: 38,
+                                  height: 44,
                                   isLoading: _isSaving,
                                   onPressed: _isSaving ? null : _saveNotes,
                                 ),

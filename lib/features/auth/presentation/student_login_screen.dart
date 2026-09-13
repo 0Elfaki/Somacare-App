@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../theme/app_theme.dart';
+import '../../../widgets/app_ui.dart';
 
 class StudentLoginScreen extends StatefulWidget {
   const StudentLoginScreen({super.key});
@@ -11,11 +12,52 @@ class StudentLoginScreen extends StatefulWidget {
 }
 
 class _StudentLoginScreenState extends State<StudentLoginScreen> {
+  // A real Supabase password-reset email, replacing a tap that used to just
+  // tell the student to contact support (or, if a school was picked, showed
+  // the school's name where a contact method should have been).
+  Future<void> _sendPasswordReset() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty || !email.contains('@')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Enter your email above, then tap "Forgot password?" again.',
+          ),
+        ),
+      );
+      return;
+    }
+    setState(() => _isSendingReset = true);
+    try {
+      await Supabase.instance.client.auth.resetPasswordForEmail(email);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Password reset link sent to $email.')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            userFriendlyErrorMessage(
+              e,
+              defaultMessage:
+                  'Could not send the reset email. Please try again.',
+            ),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isSendingReset = false);
+    }
+  }
+
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
   String? _selectedSchool;
+  bool _isSendingReset = false;
   String _role = 'student';
 
   @override
@@ -80,9 +122,17 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
             .from('profiles')
             .upsert({'id': userId, 'school': _selectedSchool}).select('id');
       }
-      await Supabase.instance.client
-          .from('profiles')
-          .upsert({'id': userId, 'role': _role}).select('id');
+      // Only write a role when this account had no profile row yet, never
+      // overwrite an existing role from the client. `dbRole` already had to
+      // equal `_role` to reach this point, and an unset profile defaults to
+      // 'student' above, so this can only ever provision a first-time
+      // student account; a doctor profile must already exist server-side
+      // with role='doctor' before its first login.
+      if (profile == null) {
+        await Supabase.instance.client
+            .from('profiles')
+            .upsert({'id': userId, 'role': _role}).select('id');
+      }
       if (!mounted) return;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -146,7 +196,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
             Text(
               '• For student logins, contact your school health coordinator.\n'
               '• For doctor credentials, reach out to your clinical director.\n'
-              '• For technical issues: support@somacare.app',
+              '• For technical issues: support@somacare.ug',
               style: BloomTextStyles.inter(
                 size: 13,
                 color: AppColors.textSecondary,
@@ -284,10 +334,12 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                                             label: 'Student',
                                             icon: Icons.school_rounded,
                                             selected: !isDoctor,
-                                            onTap: () => setState(() {
-                                              _role = 'student';
-                                              _selectedSchool = null;
-                                            }),
+                                            onTap: _isLoading
+                                                ? null
+                                                : () => setState(() {
+                                                    _role = 'student';
+                                                    _selectedSchool = null;
+                                                  }),
                                           ),
                                         ),
                                         Expanded(
@@ -295,10 +347,12 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                                             label: 'Doctor',
                                             icon: Icons.medical_services_rounded,
                                             selected: isDoctor,
-                                            onTap: () => setState(() {
-                                              _role = 'doctor';
-                                              _selectedSchool = null;
-                                            }),
+                                            onTap: _isLoading
+                                                ? null
+                                                : () => setState(() {
+                                                    _role = 'doctor';
+                                                    _selectedSchool = null;
+                                                  }),
                                           ),
                                         ),
                                       ],
@@ -348,14 +402,19 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                                         ),
                                         const SizedBox(height: 6),
                                         GestureDetector(
-                                          onTap: () async {
-                                            final school = await context
-                                                .push<String>('/school-selection');
-                                            if (school != null && mounted) {
-                                              setState(() =>
-                                                  _selectedSchool = school);
-                                            }
-                                          },
+                                          onTap: _isLoading
+                                              ? null
+                                              : () async {
+                                                  final school = await context
+                                                      .push<String>(
+                                                          '/school-selection');
+                                                  if (school != null &&
+                                                      mounted) {
+                                                    setState(() =>
+                                                        _selectedSchool =
+                                                            school);
+                                                  }
+                                                },
                                           behavior: HitTestBehavior.opaque,
                                           child: Container(
                                             height: 50,
@@ -464,19 +523,14 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                                   Align(
                                     alignment: Alignment.centerRight,
                                     child: GestureDetector(
-                                      onTap: () {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              'Contact ${_selectedSchool ?? "support@somacare.app"} for password reset',
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                      child: const Text(
-                                        'Forgot password?',
-                                        style: TextStyle(
+                                      onTap: _isSendingReset
+                                          ? null
+                                          : _sendPasswordReset,
+                                      child: Text(
+                                        _isSendingReset
+                                            ? 'Sending...'
+                                            : 'Forgot password?',
+                                        style: const TextStyle(
                                           fontFamily: 'Inter',
                                           fontSize: 12.5,
                                           fontWeight: FontWeight.w600,
@@ -682,7 +736,7 @@ class _SegmentedRoleOption extends StatelessWidget {
   final String label;
   final IconData icon;
   final bool selected;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const _SegmentedRoleOption({
     required this.label,

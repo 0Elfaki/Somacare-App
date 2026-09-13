@@ -22,7 +22,6 @@ class _DoctorAppointmentsScreenState extends State<DoctorAppointmentsScreen>
   void initState() {
     super.initState();
     _tab = TabController(length: 3, vsync: this);
-    debugPrint('DEBUG: initState called - loading appointments');
     _loadAppointments();
   }
 
@@ -37,80 +36,39 @@ class _DoctorAppointmentsScreenState extends State<DoctorAppointmentsScreen>
     try {
       final userId = Supabase.instance.client.auth.currentUser?.id;
       if (userId == null) {
-        debugPrint('Error: No user logged in');
         setState(() => _isLoading = false);
         return;
       }
 
-      debugPrint('Loading appointments for user: $userId');
-
-      // Try to fetch appointments directly by doctor_id
+      // Fetch appointments booked directly against this doctor's id.
       var data = await Supabase.instance.client
           .from('appointments')
           .select()
           .eq('doctor_id', userId)
           .order('created_at', ascending: false);
 
-      debugPrint('Appointments found by doctor_id ($userId): ${data.length}');
-
-      // If no results by ID, try by doctor_name
+      // Some older rows may have been written keyed by doctor_name instead
+      // of doctor_id — fall back to that, but stay scoped to this doctor.
+      // Never fall back to an unfiltered query: that would show every
+      // patient's appointments to any doctor whose own list is empty.
       if (data.isEmpty) {
         try {
           final profile = await Supabase.instance.client
               .from('profiles')
-              .select('full_name, id')
+              .select('full_name')
               .eq('id', userId)
               .maybeSingle();
 
-          debugPrint('Doctor profile: $profile');
-
-          if (profile != null) {
-            final doctorName = profile['full_name'] as String?;
-            final doctorProfileId = profile['id'] as String?;
-
-            debugPrint(
-              'Doctor Name: $doctorName, Profile ID: $doctorProfileId',
-            );
-
-            // Try by doctor_name
-            if (doctorName != null) {
-              data = await Supabase.instance.client
-                  .from('appointments')
-                  .select()
-                  .eq('doctor_name', doctorName)
-                  .order('created_at', ascending: false);
-              debugPrint('Appointments found by doctor_name: ${data.length}');
-            }
-
-            // Also try by profile ID if still empty
-            if (data.isEmpty && doctorProfileId != null) {
-              data = await Supabase.instance.client
-                  .from('appointments')
-                  .select()
-                  .eq('doctor_id', doctorProfileId)
-                  .order('created_at', ascending: false);
-              debugPrint('Appointments found by profile ID: ${data.length}');
-            }
+          final doctorName = profile?['full_name'] as String?;
+          if (doctorName != null) {
+            data = await Supabase.instance.client
+                .from('appointments')
+                .select()
+                .eq('doctor_name', doctorName)
+                .order('created_at', ascending: false);
           }
-        } catch (e) {
-          debugPrint('Error fetching profile: $e');
-        }
-      }
-
-      // If still no results, try fetching all (for debugging)
-      if (data.isEmpty) {
-        try {
-          final allApts = await Supabase.instance.client
-              .from('appointments')
-              .select()
-              .order('created_at', ascending: false)
-              .limit(20);
-          debugPrint('All appointments in DB: ${allApts.length}');
-          if (allApts.isNotEmpty) {
-            data = allApts;
-          }
-        } catch (e) {
-          debugPrint('Error fetching all appointments: $e');
+        } catch (_) {
+          // Non-fatal — the doctor simply has no legacy-keyed appointments.
         }
       }
 
@@ -138,8 +96,6 @@ class _DoctorAppointmentsScreenState extends State<DoctorAppointmentsScreen>
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('BUILD: All appointments: ${_appointments.length}');
-
     return Scaffold(
         backgroundColor: AppColors.pageBg,
         appBar: AppBar(
@@ -199,8 +155,6 @@ class _DoctorAppointmentsScreenState extends State<DoctorAppointmentsScreen>
   }
 
   Widget _buildSimpleList(List<Map<String, dynamic>> items, String label) {
-    debugPrint('Building $label list with ${items.length} items');
-
     if (items.isEmpty) {
       return Center(
         child: Column(

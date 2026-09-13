@@ -83,7 +83,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                 const SizedBox(height: 14),
                 TextFormField(
                   controller: testCtrl,
-                  style: const TextStyle(color: Colors.white),
+                  style: const TextStyle(color: AppColors.textPrimary),
                   decoration: const InputDecoration(labelText: 'Test name'),
                   validator: (v) =>
                       (v == null || v.trim().isEmpty) ? 'Required' : null,
@@ -93,7 +93,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                     Expanded(
                       child: TextFormField(
                         controller: valueCtrl,
-                        style: const TextStyle(color: Colors.white),
+                        style: const TextStyle(color: AppColors.textPrimary),
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
@@ -106,7 +106,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                     Expanded(
                       child: TextFormField(
                         controller: unitCtrl,
-                        style: const TextStyle(color: Colors.white),
+                        style: const TextStyle(color: AppColors.textPrimary),
                         decoration: const InputDecoration(labelText: 'Unit'),
                       ),
                     ),
@@ -117,7 +117,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                     Expanded(
                       child: TextFormField(
                         controller: lowCtrl,
-                        style: const TextStyle(color: Colors.white),
+                        style: const TextStyle(color: AppColors.textPrimary),
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
@@ -130,7 +130,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                     Expanded(
                       child: TextFormField(
                         controller: highCtrl,
-                        style: const TextStyle(color: Colors.white),
+                        style: const TextStyle(color: AppColors.textPrimary),
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
@@ -145,7 +145,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                 DropdownButtonFormField<LabResultStatus>(
                   initialValue: status,
                   dropdownColor: AppColors.surface,
-                  style: const TextStyle(color: Colors.white),
+                  style: const TextStyle(color: AppColors.textPrimary),
                   decoration: const InputDecoration(labelText: 'Status'),
                   items: LabResultStatus.values
                       .map(
@@ -294,13 +294,20 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
   Widget build(BuildContext context) {
     final fullName = (_profile?['full_name'] as String?) ?? _studentName;
     final school = (_profile?['school'] as String?) ?? '';
-    final height =
-        int.tryParse((_profile?['height'] ?? '170').toString()) ?? 170;
-    final weight = int.tryParse((_profile?['weight'] ?? '70').toString()) ?? 70;
-    final bloodType = (_profile?['blood_type'] as String?) ?? 'A+';
-    final bp = (_profile?['blood_pressure'] as String?) ?? '120/80';
+    // Vitals are shown only when actually on file — a doctor seeing a
+    // number here has to be able to trust it's the student's real data,
+    // not a plausible-looking placeholder.
+    final height = int.tryParse((_profile?['height'] ?? '').toString());
+    final weight = int.tryParse((_profile?['weight'] ?? '').toString());
+    final bloodTypeRaw = _profile?['blood_type'] as String?;
+    final bloodType =
+        (bloodTypeRaw != null && bloodTypeRaw.isNotEmpty) ? bloodTypeRaw : null;
+    final bpRaw = _profile?['blood_pressure'] as String?;
+    final bp = (bpRaw != null && bpRaw.isNotEmpty) ? bpRaw : null;
     final allergies = (_profile?['allergies'] as String?) ?? '';
-    final bmiVal = _bmi(height, weight);
+    final bmiVal = (height != null && weight != null)
+        ? _bmi(height, weight)
+        : null;
 
     return DefaultTabController(
       length: 3,
@@ -404,7 +411,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                             Expanded(
                               child: _VitalCard(
                                 label: 'Height',
-                                value: '$height cm',
+                                value: height != null ? '$height cm' : null,
                                 icon: Icons.height,
                                 color: AppColors.info,
                               ),
@@ -413,7 +420,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                             Expanded(
                               child: _VitalCard(
                                 label: 'Weight',
-                                value: '$weight kg',
+                                value: weight != null ? '$weight kg' : null,
                                 icon: Icons.monitor_weight_outlined,
                                 color: AppColors.accent,
                               ),
@@ -426,10 +433,13 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                             Expanded(
                               child: _VitalCard(
                                 label: 'BMI',
-                                value:
-                                    '${bmiVal.toStringAsFixed(1)} (${_bmiCategory(bmiVal)})',
+                                value: bmiVal != null
+                                    ? '${bmiVal.toStringAsFixed(1)} (${_bmiCategory(bmiVal)})'
+                                    : null,
                                 icon: Icons.analytics_outlined,
-                                color: _bmiColor(bmiVal),
+                                color: bmiVal != null
+                                    ? _bmiColor(bmiVal)
+                                    : AppColors.textMuted,
                               ),
                             ),
                             const SizedBox(width: 10),
@@ -681,7 +691,7 @@ class _SectionHeader extends StatelessWidget {
 
 class _VitalCard extends StatelessWidget {
   final String label;
-  final String value;
+  final String? value;
   final IconData icon;
   final Color color;
 
@@ -694,15 +704,17 @@ class _VitalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasValue = value != null;
+    final displayColor = hasValue ? color : AppColors.textMuted;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withValues(alpha: 0.15)),
+        border: Border.all(color: displayColor.withValues(alpha: 0.15)),
         boxShadow: [
           BoxShadow(
-            color: color.withValues(alpha: 0.06),
+            color: displayColor.withValues(alpha: 0.06),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -714,10 +726,10 @@ class _VitalCard extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
+              color: displayColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: color, size: 18),
+            child: Icon(icon, color: displayColor, size: 18),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -733,11 +745,12 @@ class _VitalCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  value,
+                  hasValue ? value! : 'Not recorded',
                   style: TextStyle(
                     fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: color,
+                    fontWeight: hasValue ? FontWeight.w800 : FontWeight.w600,
+                    fontStyle: hasValue ? FontStyle.normal : FontStyle.italic,
+                    color: displayColor,
                   ),
                 ),
               ],
@@ -813,12 +826,47 @@ class _PastAppointmentRow extends StatelessWidget {
   final Map<String, dynamic> appointment;
   const _PastAppointmentRow({required this.appointment});
 
+  static Color _statusColor(String status) {
+    switch (status) {
+      case 'completed':
+        return AppColors.primary;
+      case 'confirmed':
+        return AppColors.success;
+      case 'pending':
+        return AppColors.warningDark;
+      case 'cancelled':
+      case 'rejected':
+      case 'declined':
+        return AppColors.error;
+      default:
+        return AppColors.textMuted;
+    }
+  }
+
+  static Color _statusBg(String status) {
+    switch (status) {
+      case 'completed':
+      case 'confirmed':
+        return AppColors.successSurface;
+      case 'pending':
+        return AppColors.warningSurface;
+      case 'cancelled':
+      case 'rejected':
+      case 'declined':
+        return AppColors.errorSurface;
+      default:
+        return AppColors.surfaceMuted;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final date = (appointment['date'] as String?) ?? '';
     final reason = (appointment['reason'] as String?) ?? '';
     final status = (appointment['status'] as String?) ?? '';
     final notes = (appointment['doctor_notes'] as String?) ?? '';
+    final statusColor = _statusColor(status);
+    final statusBg = _statusBg(status);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -845,15 +893,15 @@ class _PastAppointmentRow extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppColors.successSurface,
+                  color: statusBg,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  status,
-                  style: const TextStyle(
+                  status.isEmpty ? 'Unknown' : status,
+                  style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
+                    color: statusColor,
                   ),
                 ),
               ),

@@ -124,7 +124,7 @@ class _DoctorMedicalHistoryManagementScreenState
       // Get unique student IDs
       final studentIds = appointmentsData
           .map((a) => a['student_id'] as String?)
-          .where((id) => id != null)
+          .whereType<String>()
           .toSet()
           .toList();
 
@@ -136,20 +136,22 @@ class _DoctorMedicalHistoryManagementScreenState
         return;
       }
 
-      // Fetch student profiles
-      List<dynamic> allProfilesData = [];
+      // Fetch profiles only for the students this doctor has actually seen —
+      // never the full patient roster.
+      List<dynamic> profilesData = [];
       try {
-        allProfilesData = await _client
+        profilesData = await _client
             .from('profiles')
-            .select('id, full_name, role');
+            .select('id, full_name, role')
+            .inFilter('id', studentIds);
       } catch (e) {
         debugPrint('Error fetching profiles: $e');
       }
 
-      final allProfiles = allProfilesData.cast<Map<String, dynamic>>();
+      final profiles = profilesData.cast<Map<String, dynamic>>();
 
       setState(() {
-        _patients = allProfiles.where((p) => p['role'] == 'student').toList();
+        _patients = profiles.where((p) => p['role'] == 'student').toList();
         _isLoadingPatients = false;
       });
     } catch (e) {

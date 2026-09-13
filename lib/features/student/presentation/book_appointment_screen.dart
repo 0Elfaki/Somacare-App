@@ -179,7 +179,7 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
 
       showAppSnack(
         context,
-        '🚨 Emergency appointment started! Doctor has been notified.',
+        'Emergency appointment started. Doctor has been notified.',
         tone: AppStatusTone.success,
       );
       context.go('/student-dashboard');

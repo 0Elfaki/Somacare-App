@@ -61,11 +61,9 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
     try {
       final userId = Supabase.instance.client.auth.currentUser?.id;
       if (userId == null) {
-        debugPrint('StudentAppointments: No user logged in');
         if (mounted) setState(() => _isLoading = false);
         return;
       }
-      debugPrint('StudentAppointments: Loading for userId: $userId');
 
       final data = await Supabase.instance.client
           .from('appointments')
@@ -73,14 +71,10 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
           .eq('student_id', userId)
           .order('date', ascending: true);
 
-      debugPrint('StudentAppointments: Found ${data.length} appointments');
-      debugPrint('StudentAppointments: Raw data: $data');
-
       if (mounted) {
         setState(() => _appointments = List<Map<String, dynamic>>.from(data));
       }
     } catch (e) {
-      debugPrint('StudentAppointments: Error loading appointments: $e');
       if (mounted) {
         showAppSnack(
           context,
@@ -94,6 +88,42 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _confirmCancel(Map<String, dynamic> a) async {
+    final id = a['id']?.toString();
+    if (id == null) return;
+    final doctorName = a['doctor_name'] as String? ?? 'your doctor';
+    final date = a['date'] as String?;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Cancel appointment?'),
+        content: Text(
+          'This will cancel your appointment with $doctorName'
+          '${date != null && date.isNotEmpty ? ' on $date' : ''}. '
+          'This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Keep appointment'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Cancel appointment'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await _cancelAppointment(id);
     }
   }
 
@@ -143,15 +173,6 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
     ]);
     final completed = _filter(['completed', 'done', 'finished']);
     final cancelled = _filter(['cancelled', 'rejected', 'declined']);
-
-    // Debug: show what statuses exist
-    final allStatuses = _appointments
-        .map((a) => a['status'] ?? '(null)')
-        .toSet();
-    debugPrint('StudentAppointments: All statuses found: $allStatuses');
-    debugPrint(
-      'StudentAppointments: Total: ${_appointments.length}, Upcoming: ${upcoming.length}, Completed: ${completed.length}, Cancelled: ${cancelled.length}',
-    );
 
     return Scaffold(
         backgroundColor: AppColors.pageBg,
@@ -214,7 +235,7 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen>
                       'channelId': 'appointment_${a['id']}',
                     },
                   ),
-                  onCancel: (a) => _cancelAppointment(a['id'].toString()),
+                  onCancel: (a) => _confirmCancel(a),
                   onRefresh: _loadAppointments,
                 ),
                 _ListTab(
@@ -377,9 +398,7 @@ class _AppointmentCard extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () {
-          // Could navigate to appointment details
-        },
+        onTap: () => _showDetails(context),
         borderRadius: AppRadius.lgAll,
         child: Container(
           decoration: BoxDecoration(
@@ -510,6 +529,110 @@ class _AppointmentCard extends StatelessWidget {
     );
   }
 
+  void _showDetails(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.textMuted,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              a['doctor_name'] as String? ?? 'Unknown Doctor',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            if ((a['doctor_specialty'] as String?)?.isNotEmpty ?? false) ...[
+              const SizedBox(height: 2),
+              Text(
+                a['doctor_specialty'] as String,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+            const SizedBox(height: 18),
+            _DetailRow(
+              icon: Icons.calendar_today_outlined,
+              label: 'Date',
+              value: a['date'] as String? ?? 'Not set',
+            ),
+            const SizedBox(height: 10),
+            _DetailRow(
+              icon: Icons.access_time_outlined,
+              label: 'Time',
+              value: a['time'] as String? ?? 'Not set',
+            ),
+            const SizedBox(height: 10),
+            _DetailRow(
+              icon: Icons.info_outline,
+              label: 'Status',
+              value: (a['status'] as String? ?? 'pending').toUpperCase(),
+            ),
+            if ((a['reason'] as String?)?.isNotEmpty ?? false) ...[
+              const SizedBox(height: 16),
+              const Text(
+                'Reason',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textMuted,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                a['reason'] as String,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textPrimary,
+                  height: 1.4,
+                ),
+              ),
+            ],
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: OutlinedButton(
+                onPressed: () => Navigator.pop(context),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: AppColors.border),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: const Text(
+                  'Close',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildActions(BuildContext context, bool isPending, bool isConfirmed) {
     if (onCancel == null) {
       return const SizedBox.shrink();
@@ -527,7 +650,7 @@ class _AppointmentCard extends StatelessWidget {
                 '/messaging-chat',
                 extra: {
                   'doctorName':
-                      a['doctor_name'] as String? ?? 'Dr. Sarah Martinez',
+                      a['doctor_name'] as String? ?? 'Unknown Doctor',
                   'doctorSpecialty': a['doctor_specialty'] as String? ?? '',
                   'doctorId': a['doctor_id'] as String?,
                   'appointmentId': a['id']?.toString(),
@@ -791,6 +914,45 @@ class _ActionButton extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _DetailRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: AppColors.textMuted),
+        const SizedBox(width: AppSpacing.xs),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textMuted,
+          ),
+        ),
+        const Spacer(),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -52,7 +52,7 @@ class _EncounterFormScreenState extends State<EncounterFormScreen> {
     setState(() => _isSaving = true);
 
     final buf = StringBuffer()
-      ..writeln('— Encounter —')
+      ..writeln('Encounter')
       ..writeln('Chief complaint: ${_complaintCtrl.text.trim()}')
       ..writeln(
         'Vitals: ${_tempCtrl.text.trim().isEmpty ? '—' : _tempCtrl.text.trim()} · '
@@ -107,7 +107,7 @@ class _EncounterFormScreenState extends State<EncounterFormScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            BloomScreenHeader(title: 'Encounter — ${widget.studentName}'),
+            BloomScreenHeader(title: 'Encounter: ${widget.studentName}'),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
