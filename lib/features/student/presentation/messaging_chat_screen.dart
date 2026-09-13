@@ -410,7 +410,7 @@ class _NoDoctorSelected extends StatelessWidget {
             Container(
               width: 72,
               height: 72,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppColors.surfaceMuted,
                 shape: BoxShape.circle,
               ),

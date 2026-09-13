@@ -217,11 +217,11 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
                     activeThumbColor: AppColors.primary,
                   ),
                 ),
-                _SettingsTile(
+                const _SettingsTile(
                   icon: Icons.dark_mode_outlined,
                   title: 'Dark Mode',
                   subtitle: 'Coming soon',
-                  trailing: const Switch(
+                  trailing: Switch(
                     value: false,
                     onChanged: null,
                     activeThumbColor: AppColors.primary,
@@ -236,8 +236,7 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
                     icon: Icons.language_outlined,
                     title: 'Language',
                     message:
-                        'English is currently the only supported language. '
-                        'More languages are planned for a future update.',
+                        'Language preferences are currently locked to English for this campus portal.',
                   ),
                 ),
                 _SettingsTile(
@@ -252,7 +251,7 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
                         'For questions about how your data is collected, '
                         'used, and protected, contact your clinical '
                         'director or campus IT. The in-app privacy policy '
-                        'viewer isn't available yet.',
+                        'viewer isn\'t available yet.',
                   ),
                 ),
                 _SettingsTile(

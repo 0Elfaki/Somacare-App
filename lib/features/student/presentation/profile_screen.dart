@@ -1065,25 +1065,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   ),
                                 ),
                                 const _HDivider(),
-                                _SettingsTile(
+                                const _SettingsTile(
                                   icon: Icons.dark_mode_outlined,
                                   label: 'Dark Mode',
                                   subtitle: 'Coming soon',
                                   color: AppColors.success,
-                                  trailing: const Switch(
+                                  trailing: Switch(
                                     value: false,
                                     onChanged: null,
                                     activeThumbColor: AppColors.success,
                                   ),
                                 ),
                                 const _HDivider(),
-                                _SettingsTile(
+                                const _SettingsTile(
                                   icon: Icons.language_outlined,
                                   label: 'Language',
                                   subtitle:
                                       'English is the only language available right now',
                                   color: AppColors.success,
-                                  trailing: const Text(
+                                  trailing: Text(
                                     'English',
                                     style: TextStyle(
                                       fontSize: 13,
