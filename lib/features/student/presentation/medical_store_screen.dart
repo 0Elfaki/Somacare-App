@@ -505,8 +505,42 @@ class _MedicalStoreScreenState extends ConsumerState<MedicalStoreScreen>
                 topRight: Radius.circular(16),
               ),
             ),
-            child: Center(
-              child: Text(product.image, style: const TextStyle(fontSize: 48)),
+            child: ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+              child: product.image.isNotEmpty
+                  ? Image.network(
+                      product.image,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: 100,
+                      loadingBuilder: (context, child, progress) {
+                        if (progress == null) return child;
+                        return const Center(
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) => Center(
+                        child: Icon(
+                          _getCategoryIcon(product.category),
+                          size: 40,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    )
+                  : Center(
+                      child: Icon(
+                        _getCategoryIcon(product.category),
+                        size: 40,
+                        color: AppColors.primary,
+                      ),
+                    ),
             ),
           ),
 
@@ -827,7 +861,11 @@ class _MedicalStoreScreenState extends ConsumerState<MedicalStoreScreen>
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Row(
                       children: [
-                        const Text('💊', style: TextStyle(fontSize: 24)),
+                        const Icon(
+                          Icons.medication,
+                          size: 24,
+                          color: AppColors.primary,
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
@@ -961,7 +999,11 @@ class _MedicalStoreScreenState extends ConsumerState<MedicalStoreScreen>
             const Divider(height: 24),
             ...order.items.map(
               (item) => ListTile(
-                leading: const Text('💊', style: TextStyle(fontSize: 24)),
+                leading: const Icon(
+                  Icons.medication,
+                  size: 24,
+                  color: AppColors.primary,
+                ),
                 title: Text(item.productName),
                 subtitle: Text('Qty: ${item.quantity}'),
                 trailing: Text(
@@ -1016,7 +1058,7 @@ class _MedicalStoreScreenState extends ConsumerState<MedicalStoreScreen>
                     id: item.productId,
                     name: item.productName,
                     description: '', price: item.price,
-                    image: '💊', category: ProductCategory.medicines,
+                    image: '', category: ProductCategory.medicines,
                     inStock: true, rating: 0, reviewCount: 0,
                     prescriptionRequired: false,
                   ),
@@ -1263,11 +1305,39 @@ class _MedicalStoreScreenState extends ConsumerState<MedicalStoreScreen>
                 color: AppColors.pageBg,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Center(
-                child: Text(
-                  product.image,
-                  style: const TextStyle(fontSize: 32),
-                ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: product.image.isNotEmpty
+                    ? Image.network(
+                        product.image,
+                        fit: BoxFit.cover,
+                        width: 80,
+                        height: 80,
+                        loadingBuilder: (context, child, progress) {
+                          if (progress == null) return child;
+                          return const Center(
+                            child: SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) => Center(
+                          child: Icon(
+                            _getCategoryIcon(product.category),
+                            size: 32,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      )
+                    : Center(
+                        child: Icon(
+                          _getCategoryIcon(product.category),
+                          size: 32,
+                          color: AppColors.primary,
+                        ),
+                      ),
               ),
             ),
             const SizedBox(width: 12),

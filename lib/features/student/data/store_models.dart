@@ -48,7 +48,7 @@ class Product {
       originalPrice: data['original_price'] != null
           ? (data['original_price'] as num).toDouble()
           : null,
-      image: data['image_url'] as String? ?? '💊',
+      image: data['image_url'] as String? ?? '',
       category: _categoryFromString(data['category'] as String?),
       inStock: data['in_stock'] as bool? ?? true,
       rating: (data['rating'] as num?)?.toDouble() ?? 4.5,
