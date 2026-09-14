@@ -7,13 +7,13 @@ import '../../../widgets/bloom_components.dart';
 /// Payment method options mirrored from the Bloom spec (screen 9).
 enum _PayMethod { mtn, airtel, card }
 
-/// Spec screen 9 — Payment.
+/// Spec screen 9 - Payment.
 ///
 /// Expects a route `extra` map with:
 /// - `doctorName` (String)
 /// - `consultFee` (int, UGX)
 /// - `platformFee` (int, UGX)
-/// - `onConfirm` (`Future<void> Function()`) — performs the actual booking
+/// - `onConfirm` (`Future<void> Function()`) - performs the actual booking
 ///   write (Supabase insert + notification). Called when the student taps Pay.
 class PaymentScreen extends StatefulWidget {
   final String doctorName;
@@ -50,7 +50,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   /// Card payments need a vetted card-entry SDK (Stripe Elements or
-  /// equivalent) rather than a hand-rolled card form — that integration
+  /// equivalent) rather than a hand-rolled card form - that integration
   /// isn't wired up yet, so card is disabled here rather than accepting a
   /// "payment" with no card details actually collected.
   bool get _canPay {

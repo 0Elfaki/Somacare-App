@@ -1,4 +1,4 @@
-# Doctor Portal — Implementation Plan (Revised)
+# Doctor Portal - Implementation Plan (Revised)
 
 ## Architecture Corrections
 
@@ -43,7 +43,7 @@ lib/features/doctor/
     └── doctor_profile_screen.dart
 ```
 
-No custom models or repositories needed — query Supabase directly with `.select()` like the existing screens do.
+No custom models or repositories needed - query Supabase directly with `.select()` like the existing screens do.
 
 ---
 
@@ -58,7 +58,7 @@ No custom models or repositories needed — query Supabase directly with `.selec
 ### 2. DoctorDashboardScreen
 - Header card: "Welcome, Dr. [name]" + specialization
 - Stats row: Today's appointments count, Pending count, Completed count
-- "Today's Schedule" — list of today's appointments (max 5)
+- "Today's Schedule" - list of today's appointments (max 5)
 - Quick action buttons: View All Appointments, Write Prescription
 - Logout button at bottom
 - Data: `Supabase.from('appointments').select().eq('doctor_name', doctorName).eq('date', today)`
@@ -92,7 +92,7 @@ No custom models or repositories needed — query Supabase directly with `.selec
 - Read-only display of a student's profile
 - Loads from `Supabase.from('profiles').select().eq('id', studentId).single()`
 - Shows: name, school, height, weight, BMI, blood type, BP, allergies
-- "Past Appointments" section — list of previous visits with this doctor
+- "Past Appointments" section - list of previous visits with this doctor
 
 ### 7. PrescriptionWriterScreen
 - Receives `studentId` + `appointmentId` via route extra

@@ -134,7 +134,7 @@ class _PrescriptionWriterScreenState extends State<PrescriptionWriterScreen> {
         'updated_at': now.toIso8601String(),
       });
 
-      // Try to add to medical history (optional — table may not exist yet)
+      // Try to add to medical history (optional - table may not exist yet)
       try {
         final medicationEntry =
             '''
@@ -168,7 +168,7 @@ Prescribed: ${now.toIso8601String().split('T').first}
           'updated_at': now.toIso8601String(),
         }, onConflict: 'student_id');
       } catch (_) {
-        // medical_histories table may not exist yet — that's OK
+        // medical_histories table may not exist yet - that's OK
       }
 
       if (mounted) {

@@ -37,7 +37,7 @@ class _SchoolSelectionScreenState extends State<SchoolSelectionScreen> {
           .select('name')
           .order('name', ascending: true);
       final rawNames = (data as List).map((e) => e['name'] as String).toList();
-      // Dedupe defensively (case-insensitive, trimmed) — the schools table
+      // Dedupe defensively (case-insensitive, trimmed) - the schools table
       // can end up with duplicate name rows (e.g. re-seeded data), and a
       // repeated entry in this list is confusing during onboarding.
       final seen = <String>{};
@@ -78,13 +78,13 @@ class _SchoolSelectionScreenState extends State<SchoolSelectionScreen> {
     try {
       final userId = Supabase.instance.client.auth.currentUser?.id;
       if (userId != null) {
-        // `profiles` has no `school` column — it's `school_id` (uuid,
+        // `profiles` has no `school` column - it's `school_id` (uuid,
         // references `schools.id`). This upsert previously sent a raw
         // school *name* under a column that doesn't exist at all, so it
         // always failed with a Postgrest "column not found" error caught
         // below as "Failed: ...". Resolve the name to its id first. Note
         // `schools.name` isn't unique in the seed data (a few names have
-        // duplicate rows with different ids) — this takes the first match,
+        // duplicate rows with different ids) - this takes the first match,
         // which is a pre-existing data-quality issue, not something fixed
         // here.
         final schoolRow = await Supabase.instance.client
@@ -96,7 +96,7 @@ class _SchoolSelectionScreenState extends State<SchoolSelectionScreen> {
         final schoolId = schoolRow?['id'] as String?;
         await Supabase.instance.client
             .from('profiles')
-            .upsert({'id': userId, if (schoolId != null) 'school_id': schoolId})
+            .upsert({'id': userId, 'school_id': ?schoolId})
             .select('id');
         if (mounted) {
           WidgetsBinding.instance.addPostFrameCallback((_) {

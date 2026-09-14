@@ -1,5 +1,5 @@
 /// Immutable data model for a single chat message between a student and
-/// a doctor. Mirrors the `public.messages` table — see
+/// a doctor. Mirrors the `public.messages` table - see
 /// `create_messages.sql` for the schema.
 enum MessageType { text, image, voice }
 

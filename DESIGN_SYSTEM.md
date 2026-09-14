@@ -1,6 +1,6 @@
 # SomaCare design system
 
-One palette, one type scale, one set of components — for the student side and
+One palette, one type scale, one set of components - for the student side and
 the doctor side alike. The student dashboard set the direction; the doctor side
 now renders from the same widgets rather than its own look-alikes.
 
@@ -16,8 +16,7 @@ Everything lives in two files:
 ## The rules
 
 1. **No screen declares a `Color(0x…)`.** Every colour has a semantic name in
-   `AppColors`. If a screen needs a colour that is not there, add a token —
-   don't inline a hex.
+   `AppColors`. If a screen needs a colour that is not there, add a token - don't inline a hex.
 2. **No text below 11px.** `AppTypography.labelSmall` is the floor. Body copy is
    `bodyLarge` (15px).
 3. **Every tappable thing is at least 48×48.** `AppTouch.minTarget`. The theme
@@ -54,20 +53,20 @@ Before this consolidation the app carried four blues (`#3A86FF`, `#5B8CFF`,
 
 | Token | Value | Contrast on `surface` |
 |---|---|---|
-| `pageBg` | `#F8FAFC` | — |
-| `surface` | `#FFFFFF` | — |
-| `surfaceMuted` | `#F1F5F9` | — |
-| `border` | `#E2E8F0` | — |
-| `textPrimary` | `#1E293B` | 13.2:1 — AAA |
-| `textSecondary` | `#64748B` | 4.8:1 — AA |
-| `textMuted` | `#94A3B8` | 2.6:1 — **decorative only**, never body text |
+| `pageBg` | `#F8FAFC` | - |
+| `surface` | `#FFFFFF` | - |
+| `surfaceMuted` | `#F1F5F9` | - |
+| `border` | `#E2E8F0` | - |
+| `textPrimary` | `#1E293B` | 13.2:1 - AAA |
+| `textSecondary` | `#64748B` | 4.8:1 - AA |
+| `textMuted` | `#94A3B8` | 2.6:1 - **decorative only**, never body text |
 
 ### Two special sets
 
-- **`fill*`** — solid tile fills that carry white text at ≥4.5:1. White on
+- **`fill*`** - solid tile fills that carry white text at ≥4.5:1. White on
   `warning` is only 2.1:1, so the quick-action grid uses `fillAmber`
   (`#B45309`) instead. Same for `fillTeal`.
-- **`*OnDark`** — the status hues lightened for the inverse surface (snack bars,
+- **`*OnDark`** - the status hues lightened for the inverse surface (snack bars,
   tooltips), where the light-background versions fall under 3:1.
 
 ---
@@ -85,7 +84,7 @@ Fraunces for display and headings, Inter for UI, IBM Plex Mono for data
 | `bodyLarge` … `bodySmall` | 15 / 13.5 / 12.5 | Inter 400 |
 | `labelLarge` … `labelSmall` | 14 / 12.5 / 11 | Inter 600 |
 
-The previous scale ran 26px down to **8.5px** — smaller than a phone can render
+The previous scale ran 26px down to **8.5px** - smaller than a phone can render
 legibly. `main.dart` also clamps the OS text scale to 0.85–1.4, so a user at
 200% font size gets larger text without bursting fixed-height cards.
 
@@ -96,7 +95,7 @@ legibly. `main.dart` also clamps the OS text scale to 0.85–1.4, so a user at
 | Widget | What it is |
 |---|---|
 | `AppScreen` | Page chrome: sliver scroll view, pull-to-refresh, nav clearance |
-| `AppPageHeader` | Eyebrow + display title + circular actions — the dashboard header |
+| `AppPageHeader` | Eyebrow + display title + circular actions - the dashboard header |
 | `AppDetailHeader` | Same, with a back affordance |
 | `AppCircleButton` | 42px circle on a 48px target, tooltip required, optional badge |
 | `AppCard` | White, 16px radius, hairline border. The only card |
@@ -122,8 +121,8 @@ AppColors.studentAccent  // = primary, blue
 AppColors.doctorAccent   // = success, teal
 ```
 
-Used for the active bottom-nav item. Everything else — page background, cards,
-type, spacing, status colours, empty states — is shared.
+Used for the active bottom-nav item. Everything else - page background, cards,
+type, spacing, status colours, empty states - is shared.
 
 ---
 

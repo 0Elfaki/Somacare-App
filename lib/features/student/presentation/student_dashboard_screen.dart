@@ -21,6 +21,7 @@ class StudentDashboardScreen extends StatefulWidget {
 
 class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   String _studentName = '';
+  String? _avatarUrl;
   bool _loading = true;
   String? _authError;
   bool _carePlanError = false;
@@ -72,11 +73,14 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     try {
       final data = await client
           .from('profiles')
-          .select('full_name')
+          .select('full_name, avatar_url')
           .eq('id', userId)
           .maybeSingle()
           .timeout(const Duration(seconds: 6), onTimeout: () => null);
       name = (data?['full_name'] as String?)?.trim() ?? '';
+      if (mounted) {
+        setState(() => _avatarUrl = data?['avatar_url'] as String?);
+      }
     } catch (e) {
       debugPrint('Could not load student name: $e');
     }
@@ -158,13 +162,6 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
 
   // ── Presentation ───────────────────────────────────────────────────────────
 
-  String get _greeting {
-    final h = DateTime.now().hour;
-    if (h < 12) return 'Good morning';
-    if (h < 17) return 'Good afternoon';
-    return 'Good evening';
-  }
-
   List<AppQuickAction> get _quickActions => [
     AppQuickAction(
       label: 'Message a doctor',
@@ -244,7 +241,11 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                 child: Semantics(
                   button: true,
                   label: 'Your profile',
-                  child: AppAvatar(name: _studentName, size: 42),
+                  child: AppAvatar(
+                    name: _studentName,
+                    size: 42,
+                    imageUrl: _avatarUrl,
+                  ),
                 ),
               ),
               AppCircleButton(

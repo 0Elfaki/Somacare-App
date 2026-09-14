@@ -6,7 +6,7 @@ import '../../../widgets/bloom_components.dart';
 import '../data/lab_result_model.dart';
 import '../data/lab_result_repository.dart';
 
-/// Spec screen 16 — Lab Results Trend.
+/// Spec screen 16 - Lab Results Trend.
 class LabResultsScreen extends StatefulWidget {
   const LabResultsScreen({super.key});
 

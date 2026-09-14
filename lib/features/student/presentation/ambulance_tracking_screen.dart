@@ -4,11 +4,11 @@ import 'package:go_router/go_router.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/bloom_components.dart';
 
-/// Spec screen 25 — Ambulance Live Tracking.
+/// Spec screen 25 - Ambulance Live Tracking.
 ///
 /// There is no live ambulance-dispatch backend yet, so ETA/driver/stepper
 /// state is simulated locally (mirrors the demo-data fallback pattern
-/// already used by [MedicalHistoryRepository]) — this screen still performs
+/// already used by [MedicalHistoryRepository]) - this screen still performs
 /// a real Supabase write via the emergency request that pushed it, it just
 /// doesn't yet have a live GPS feed to render.
 class AmbulanceTrackingScreen extends StatefulWidget {

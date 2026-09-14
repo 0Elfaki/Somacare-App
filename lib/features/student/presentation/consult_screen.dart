@@ -13,7 +13,7 @@ const String _appId = String.fromEnvironment(
 const String _defaultChannel = 'consultation';
 
 class ConsultScreen extends StatefulWidget {
-  /// Optional channel override — pass via GoRouter extra:
+  /// Optional channel override - pass via GoRouter extra:
   /// `context.push('/consult', extra: {'channelId': 'appointment_xyz'})`
   final String? channelId;
   final String? doctorName;
@@ -58,7 +58,7 @@ class _ConsultScreenState extends State<ConsultScreen> {
   /// Fetches a short-lived Agora RTC token from the `agora-token` Supabase
   /// Edge Function, which holds the App Certificate server-side. Returns an
   /// empty string (join without a token) if the function isn't deployed yet
-  /// or the call fails — that only works on Agora projects without App
+  /// or the call fails - that only works on Agora projects without App
   /// Certificate security enabled.
   Future<String> _fetchAgoraToken(String channelName) async {
     try {

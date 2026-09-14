@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
-/// The "Bloom" component set — the older shared widgets, still used across the
+/// The "Bloom" component set - the older shared widgets, still used across the
 /// student flows. New work should prefer `widgets/app_ui.dart`, which is the
 /// design system the two dashboards share; these are kept because seventeen
 /// screens still render from them, and they now draw entirely from the same
@@ -656,7 +656,7 @@ class BloomMapPlaceholder extends StatelessWidget {
     return Container(
       height: height,
       decoration: BoxDecoration(
-        // Dark map canvas — this widget draws a night-mode map, not a
+        // Dark map canvas - this widget draws a night-mode map, not a
         // light surface, so it does not take a surface token.
         color: const Color(0xFF1A3037),
         borderRadius: BorderRadius.circular(16),

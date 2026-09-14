@@ -194,7 +194,7 @@ class AppPageHeader extends StatelessWidget {
   }
 }
 
-/// A back-navigation header for detail screens — same visual language as
+/// A back-navigation header for detail screens - same visual language as
 /// [AppPageHeader] but with a leading back affordance instead of a greeting.
 class AppDetailHeader extends StatelessWidget {
   const AppDetailHeader({
@@ -369,7 +369,7 @@ class AppCard extends StatelessWidget {
   }
 }
 
-/// A small tinted square holding an icon — the motif used on stat cards,
+/// A small tinted square holding an icon - the motif used on stat cards,
 /// list rows and quick actions.
 class AppIconChip extends StatelessWidget {
   const AppIconChip({
@@ -493,8 +493,8 @@ class AppStatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final shown = loading ? '—' : value;
-    // Icon badge on top, value + label stacked underneath — the same
+    final shown = loading ? '-' : value;
+    // Icon badge on top, value + label stacked underneath - the same
     // silhouette as an [AppQuickActionCard] tile, just on a white surface
     // with a soft shadow instead of a saturated fill. Keeping the two card
     // families visually related is the point: a stat card and a quick
@@ -722,7 +722,7 @@ class AppQuickAction {
 }
 
 /// A tile in the quick-actions grid: a saturated fill with a translucent icon
-/// chip and white text — the look the student dashboard established.
+/// chip and white text - the look the student dashboard established.
 ///
 /// Pass one of the `AppColors.fill*` values as [AppQuickAction.color]; the
 /// lighter status hues do not carry white text at an accessible contrast.
@@ -1039,11 +1039,17 @@ class AppAvatar extends StatelessWidget {
     required this.name,
     this.size = 42,
     this.color = AppColors.primary,
+    this.imageUrl,
   });
 
   final String? name;
   final double size;
   final Color color;
+
+  /// A `profiles.avatar_url` value. When set (student or doctor has
+  /// uploaded a profile photo), it's shown instead of the initials circle;
+  /// a load failure falls back to initials rather than a broken image.
+  final String? imageUrl;
 
   String get _initials {
     final n = name?.trim() ?? '';
@@ -1054,8 +1060,7 @@ class AppAvatar extends StatelessWidget {
     return (parts.first[0] + parts.last[0]).toUpperCase();
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _fallback() {
     final initials = _initials;
     return Container(
       width: size,
@@ -1075,6 +1080,20 @@ class AppAvatar extends StatelessWidget {
                 color: color,
               ),
             ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (imageUrl == null || imageUrl!.isEmpty) return _fallback();
+    return ClipOval(
+      child: Image.network(
+        imageUrl!,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stack) => _fallback(),
+      ),
     );
   }
 }

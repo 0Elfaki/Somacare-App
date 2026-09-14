@@ -8,7 +8,7 @@ import '../../../widgets/app_ui.dart';
 
 // The API key is injected at build/run time instead of hardcoded in source.
 // A key committed directly into Dart code ships inside the built app (APK/IPA)
-// and can be extracted by anyone who inspects it — this is very likely why
+// and can be extracted by anyone who inspects it - this is very likely why
 // the previous hardcoded key started returning "Invalid API Key": exposed
 // keys get caught by automated secret-scanning and revoked.
 //
@@ -833,7 +833,7 @@ class _SuggestionChip extends StatelessWidget {
 // ── Symptom Checklist Bubble ────────────────────────────────────────────────
 //
 // Mirrors the "Thanks for sharing. I've noted the following symptoms:" card
-// from the AI Symptom Checker design — a wide assistant bubble that lists a
+// from the AI Symptom Checker design - a wide assistant bubble that lists a
 // fixed set of tracked symptoms and whether the user has mentioned them yet.
 
 class _SymptomChecklistBubble extends StatelessWidget {

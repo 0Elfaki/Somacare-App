@@ -8,7 +8,7 @@
 // Deploy via Supabase Dashboard -> Edge Functions -> Deploy a new function
 // (paste this file's contents), then set secrets:
 //   AGORA_APP_ID           = 72656e25ae404defb07daea155e9806f
-//   AGORA_APP_CERTIFICATE  = <the certificate value — never commit it>
+//   AGORA_APP_CERTIFICATE  = <the certificate value - never commit it>
 
 import { RtcRole, RtcTokenBuilder } from "npm:agora-access-token@2.0.4";
 
@@ -54,7 +54,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const expirationInSeconds = 3600; // 1 hour — plenty for a consult call
+    const expirationInSeconds = 3600; // 1 hour - plenty for a consult call
     const currentTimestamp = Math.floor(Date.now() / 1000);
     const privilegeExpiredTs = currentTimestamp + expirationInSeconds;
 

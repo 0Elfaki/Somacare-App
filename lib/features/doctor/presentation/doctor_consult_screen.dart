@@ -49,7 +49,7 @@ class _DoctorConsultScreenState extends State<DoctorConsultScreen> {
   /// Fetches a short-lived Agora RTC token from the `agora-token` Supabase
   /// Edge Function, which holds the App Certificate server-side. Returns an
   /// empty string (join without a token) if the function isn't deployed yet
-  /// or the call fails — that only works on Agora projects without App
+  /// or the call fails - that only works on Agora projects without App
   /// Certificate security enabled.
   Future<String> _fetchAgoraToken(String channelName) async {
     try {
@@ -140,7 +140,7 @@ class _DoctorConsultScreenState extends State<DoctorConsultScreen> {
     if (_isEndingCall) return;
     setState(() => _isEndingCall = true);
 
-    // Quick cleanup — don't block navigation
+    // Quick cleanup - don't block navigation
     try {
       await _engine?.leaveChannel().timeout(const Duration(milliseconds: 500), onTimeout: () {});
     } catch (_) {}

@@ -69,7 +69,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
     // A lingering session from a previous login (Supabase persists sessions
     // on-device) used to mean the router's own redirect guard sent anyone
     // who opened this screen straight to that old session's dashboard,
-    // before they could type different credentials at all — the doctor
+    // before they could type different credentials at all - the doctor
     // credentials were never actually checked. Reaching a login screen
     // means the user wants to authenticate as someone (possibly someone
     // else), so drop any existing session first.
@@ -164,8 +164,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
       // Set the router's cached role synchronously instead of waiting on
       // the async onAuthStateChange -> refreshRole() round trip. `dbRole`
       // was already confirmed to equal `_role` above, so this is exactly
-      // the role the redirect guard should use for the `context.go` below —
-      // without this, the guard could still be holding the *previous*
+      // the role the redirect guard should use for the `context.go` below - // without this, the guard could still be holding the *previous*
       // session's role for a moment and bounce the user right back.
       setCachedAuthRole(_role);
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -349,48 +348,77 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // ── Full-Width Role Switcher ───────────────────
-                                  Container(
-                                    height: 44,
-                                    decoration: BoxDecoration(
-                                      color: AppColors.pageBg,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: AppColors.border,
-                                        width: 1,
+                                  // ── Role Badge ──────────────────────────────────
+                                  // The role was already decided on
+                                  // role-selection_screen.dart - this screen must
+                                  // not re-present it as an open, equally-weighted
+                                  // choice (that's what read as "the doctor option
+                                  // showing up again" right after picking Student).
+                                  // It's shown here as a plain, non-interactive
+                                  // label, with a small link back to the real
+                                  // selection screen for anyone who tapped the
+                                  // wrong card.
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 8,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: (isDoctor
+                                                  ? AppColors.success
+                                                  : AppColors.primary)
+                                              .withValues(alpha: 0.1),
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              isDoctor
+                                                  ? Icons.medical_services_rounded
+                                                  : Icons.school_rounded,
+                                              size: 16,
+                                              color: isDoctor
+                                                  ? AppColors.success
+                                                  : AppColors.primary,
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              isDoctor
+                                                  ? 'Doctor login'
+                                                  : 'Student login',
+                                              style: TextStyle(
+                                                fontFamily: 'Inter',
+                                                fontSize: 12.5,
+                                                fontWeight: FontWeight.w700,
+                                                color: isDoctor
+                                                    ? AppColors.success
+                                                    : AppColors.primary,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                    padding: const EdgeInsets.all(3),
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: _SegmentedRoleOption(
-                                            label: 'Student',
-                                            icon: Icons.school_rounded,
-                                            selected: !isDoctor,
-                                            onTap: _isLoading
-                                                ? null
-                                                : () => setState(() {
-                                                    _role = 'student';
-                                                    _selectedSchool = null;
-                                                  }),
+                                      const Spacer(),
+                                      GestureDetector(
+                                        onTap: _isLoading
+                                            ? null
+                                            : () => context.go('/role-selection'),
+                                        behavior: HitTestBehavior.opaque,
+                                        child: Text(
+                                          'Not a ${isDoctor ? 'doctor' : 'student'}?',
+                                          style: const TextStyle(
+                                            fontFamily: 'Inter',
+                                            fontSize: 12.5,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.textSecondary,
+                                            decoration: TextDecoration.underline,
                                           ),
                                         ),
-                                        Expanded(
-                                          child: _SegmentedRoleOption(
-                                            label: 'Doctor',
-                                            icon: Icons.medical_services_rounded,
-                                            selected: isDoctor,
-                                            onTap: _isLoading
-                                                ? null
-                                                : () => setState(() {
-                                                    _role = 'doctor';
-                                                    _selectedSchool = null;
-                                                  }),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
 
                                   const SizedBox(height: 20),
@@ -763,67 +791,6 @@ class _LoginField extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// 50% width segmented role option with fluid animation and icon indicator.
-class _SegmentedRoleOption extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool selected;
-  final VoidCallback? onTap;
-
-  const _SegmentedRoleOption({
-    required this.label,
-    required this.icon,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOut,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: selected ? AppColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(9),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.25),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 16,
-              color: selected ? Colors.white : AppColors.textSecondary,
-            ),
-            const SizedBox(width: 7),
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 13,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                color: selected ? Colors.white : AppColors.textSecondary,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

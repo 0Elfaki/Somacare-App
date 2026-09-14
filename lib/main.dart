@@ -46,7 +46,7 @@ class AppConfig {
 }
 
 /// True in a browser or a resizable desktop window, where the viewport can be
-/// arbitrarily wide. False on native Android/iOS — including tablets — where
+/// arbitrarily wide. False on native Android/iOS - including tablets - where
 /// the app should fill the real screen.
 bool get _isWideWindowPlatform =>
     kIsWeb ||
@@ -55,8 +55,8 @@ bool get _isWideWindowPlatform =>
     defaultTargetPlatform == TargetPlatform.linux;
 
 Future<void> main() async {
-  // Catching errors from the whole zone — including async ones raised outside
-  // a widget build — so a release build reports rather than silently dies.
+  // Catching errors from the whole zone - including async ones raised outside
+  // a widget build - so a release build reports rather than silently dies.
   runZonedGuarded(
     () async {
       WidgetsFlutterBinding.ensureInitialized();

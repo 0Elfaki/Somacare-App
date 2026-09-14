@@ -7,7 +7,7 @@ import '../../../widgets/bloom_components.dart';
 import '../data/prescription_repository.dart';
 import '../data/medication_models.dart';
 
-/// Spec screen 13 — Post-Consultation Summary.
+/// Spec screen 13 - Post-Consultation Summary.
 ///
 /// Expects a route `extra` map with:
 /// - `doctorName` (String)

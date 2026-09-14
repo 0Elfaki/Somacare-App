@@ -1,5 +1,5 @@
 -- ============================================================================
--- DOCTOR PORTAL — DATABASE MIGRATION
+-- DOCTOR PORTAL - DATABASE MIGRATION
 -- ============================================================================
 -- Run this SQL in your Supabase SQL Editor to add doctor-specific columns
 -- and Row Level Security policies.
@@ -21,7 +21,7 @@ ALTER TABLE profiles
 ALTER TABLE prescriptions
   ADD COLUMN IF NOT EXISTS doctor_id UUID REFERENCES profiles(id);
 
--- ── 4. RLS — Appointments ─────────────────────────────────────────────────────
+-- ── 4. RLS - Appointments ─────────────────────────────────────────────────────
 
 -- Doctors can SELECT appointments assigned to them (by name or by doctor_id)
 DO $$
@@ -61,10 +61,10 @@ BEGIN
   END IF;
 END $$;
 
--- ── 5. RLS — Profiles ────────────────────────────────────────────────────────
+-- ── 5. RLS - Profiles ────────────────────────────────────────────────────────
 
 -- Helper function used below: SECURITY DEFINER means its internal SELECT on
--- profiles bypasses RLS, which is required — a policy on profiles cannot
+-- profiles bypasses RLS, which is required - a policy on profiles cannot
 -- safely subquery profiles directly (Postgres re-applies the same policy to
 -- the subquery, causing "infinite recursion detected in policy for
 -- relation profiles").
@@ -99,7 +99,7 @@ BEGIN
   END IF;
 END $$;
 
--- ── 6. RLS — Prescriptions ───────────────────────────────────────────────────
+-- ── 6. RLS - Prescriptions ───────────────────────────────────────────────────
 -- NOTE: doctor_id column must exist on prescriptions before these policies run.
 -- The ALTER TABLE above adds it.
 
@@ -138,7 +138,7 @@ BEGIN
   END IF;
 END $$;
 
--- ── 7. Sample doctor profile (optional — replace UUID with real doctor user ID)
+-- ── 7. Sample doctor profile (optional - replace UUID with real doctor user ID)
 -- UPDATE profiles
 --   SET specialization = 'General Practice',
 --       license_number = 'LIC-001',

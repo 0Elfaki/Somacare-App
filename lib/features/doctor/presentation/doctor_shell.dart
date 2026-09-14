@@ -6,7 +6,7 @@ import '../../../widgets/app_ui.dart';
 
 /// The doctor side's persistent chrome.
 ///
-/// Uses the same [AppBottomNav] as the student shell — the only difference is
+/// Uses the same [AppBottomNav] as the student shell - the only difference is
 /// the accent colour and the set of destinations.
 class DoctorShell extends StatelessWidget {
   const DoctorShell({super.key, required this.child});

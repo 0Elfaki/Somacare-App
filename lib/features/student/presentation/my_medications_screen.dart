@@ -374,7 +374,7 @@ class _MyMedicationsScreenState extends ConsumerState<MyMedicationsScreen>
                             if (!sheetContext.mounted) return;
                             if (ok) {
                               Navigator.pop(sheetContext);
-                              if (!context.mounted) return;
+                              if (!mounted) return;
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text('$name added to your medications'),

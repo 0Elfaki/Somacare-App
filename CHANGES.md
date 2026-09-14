@@ -43,7 +43,7 @@ doctor-owned routes explicitly.
 emergencies, quick actions, approvals and the day's schedule were laid out in a
 fixed `Column` with one `Expanded`, inside a `RefreshIndicator` that had no
 scrollable to drive. On a 360×640 screen that yellow-and-black-striped; pull to
-refresh did nothing. It is now a sliver list — it scrolls, and refresh works.
+refresh did nothing. It is now a sliver list - it scrolls, and refresh works.
 
 **Two dead routes.** `/doctor/student/:id` and `/doctor/student/:studentId`
 declared the same path shape twice; only the first was reachable. And
@@ -54,8 +54,8 @@ are now declared properly.
 **The theme lied about itself.** `buildDarkTheme()` built a `Brightness.dark`
 `ThemeData` with a `ColorScheme.dark`, filled entirely with *light* colours
 (`darkPageBg` was `#F8FAFC`). Every Flutter widget that reads brightness rather
-than an explicit colour — dialogs, snack bars, menus, text-selection handles,
-keyboard appearance, status-bar icons — picked dark-theme defaults and rendered
+than an explicit colour - dialogs, snack bars, menus, text-selection handles,
+keyboard appearance, status-bar icons - picked dark-theme defaults and rendered
 light-on-light. There is now one honestly-declared light theme.
 
 **Leaked controllers.** Five `TextEditingController`s in the doctor's
@@ -73,7 +73,7 @@ causes one refetch instead of ten.
 `student_id`; nothing resolved it. Names are now looked up once per load.
 
 **A dead notification bell.** The student dashboard's bell had `onTap: () {}`.
-It opens notifications now — and the notifications screen no longer forces
+It opens notifications now - and the notifications screen no longer forces
 `/doctor-dashboard` on back, which sent students to the wrong side of the app.
 
 ---
@@ -95,18 +95,18 @@ It opens notifications now — and the notifications screen no longer forces
 
 ### After
 
-- **`lib/theme/app_theme.dart`** — one palette, one type scale, one `ThemeData`.
+- **`lib/theme/app_theme.dart`** - one palette, one type scale, one `ThemeData`.
   Hex literals outside it: **5**, each annotated with why it is an exception
   (a payment provider's trademarked colour, the frozen onboarding gradient, a
   night-mode map canvas, a three-step risk ramp).
-- **`lib/widgets/app_ui.dart`** — the component set both dashboards render
+- **`lib/widgets/app_ui.dart`** - the component set both dashboards render
   from. Not two look-alikes: the same widgets.
 - The doctor dashboard is now structurally the student dashboard: greeting
-  header, stat row, hero banner, quick-action grid, sectioned list — same
+  header, stat row, hero banner, quick-action grid, sectioned list - same
   widgets, same spacing, same states.
 - One `AppBottomNav`. The shells differ by one line: `accent`.
 - Doctor app bars inherit from the theme instead of each inventing a look.
-- `common_widgets.dart` (866 lines) was imported by nothing — deleted. Seven
+- `common_widgets.dart` (866 lines) was imported by nothing - deleted. Seven
   unused Bloom components went with it.
 
 ### Accessibility
@@ -115,7 +115,7 @@ It opens notifications now — and the notifications screen no longer forces
   the smallest label is 11px. `main.dart` clamps the OS text scale to 0.85–1.4,
   so a user at 200% gets bigger text without bursting fixed-height cards.
 - **Contrast.** `textSecondary` on white is 4.8:1. White on `warning` was
-  2.1:1 in the quick-action tiles — those now use `fillAmber` (5.2:1). Status
+  2.1:1 in the quick-action tiles - those now use `fillAmber` (5.2:1). Status
   colours on the dark snack bar have lightened `*OnDark` variants.
 - **Touch targets.** Buttons, icon buttons and nav items are all ≥48×48.
 - **Tooltips.** 24 icon-only buttons had no label. All 26 do now.
@@ -129,12 +129,12 @@ It opens notifications now — and the notifications screen no longer forces
 
 | | Before | After |
 |---|---|---|
-| iOS camera/mic purpose strings | **missing** — iOS kills the app the moment Agora asks for the camera, and App Review rejects the binary | present, with photo-library and encryption-exemption keys |
+| iOS camera/mic purpose strings | **missing** - iOS kills the app the moment Agora asks for the camera, and App Review rejects the binary | present, with photo-library and encryption-exemption keys |
 | Release signing | debug key | reads `android/key.properties`; warns loudly and falls back to debug if absent |
-| `applicationId` | `com.example.telemedicine101` — rejected by the Play Console | `com.somacare.app` |
-| Agora ProGuard rules | **missing** with `isMinifyEnabled = true` — R8 strips the JNI entry points, so video calls fail *only in release* | added, along with permission_handler and printing |
-| `usesCleartextTraffic` | `true` | `false` — everything is HTTPS |
-| `CALL_PHONE` permission | requested but unused (the app opens the dialler with a `tel:` intent, which needs no permission) — a Play Store policy flag | removed; Agora's network/bluetooth permissions added |
+| `applicationId` | `com.example.telemedicine101` - rejected by the Play Console | `com.somacare.app` |
+| Agora ProGuard rules | **missing** with `isMinifyEnabled = true` - R8 strips the JNI entry points, so video calls fail *only in release* | added, along with permission_handler and printing |
+| `usesCleartextTraffic` | `true` | `false` - everything is HTTPS |
+| `CALL_PHONE` permission | requested but unused (the app opens the dialler with a `tel:` intent, which needs no permission) - a Play Store policy flag | removed; Agora's network/bluetooth permissions added |
 | Supabase config | hard-coded | `--dart-define` with the current values as defaults |
 | Startup failure | black screen | an explained error screen |
 | Release crashes | red error screen | a screen a patient can act on |
@@ -145,7 +145,7 @@ It opens notifications now — and the notifications screen no longer forces
 ## 5. Tests
 
 `test/widget_test.dart` used to pump `SOMACAREApp()` and look for onboarding
-text — it could not pass without a live Supabase session. It now covers the
+text - it could not pass without a live Supabase session. It now covers the
 design system, which needs no backend and runs in CI:
 
 - the theme declares the brightness it actually is
@@ -162,7 +162,7 @@ design system, which needs no backend and runs in CI:
 
 ## 6. How this was verified
 
-`flutter analyze` could not be run where this work was done — the sandbox has
+`flutter analyze` could not be run where this work was done - the sandbox has
 no access to pub.dev or the Flutter SDK download. Two things were done instead.
 
 **A structural checker** (`tools/dart_check.py`) validates bracket balance
@@ -173,8 +173,7 @@ found and fixed one real bug: a tooltip inserted into a widget that had no
 `tooltip` parameter.
 
 **Validation against your actual SDK.** With read access to
-`D:\flutter\packages\flutter\lib\src`, every constructor call in the project —
-**367 sites** — had its named arguments checked against the real signatures in
+`D:\flutter\packages\flutter\lib\src`, every constructor call in the project - **367 sites** - had its named arguments checked against the real signatures in
 Flutter 3.41.2. Zero mismatches. All 191 `Icons.*` names were confirmed to
 exist. `TextScaler.clamp`, `SliverList.separated`, `MediaQuery.textScalerOf`,
 `InkSparkle.splashFactory`, `DialogThemeData` and `TabBarThemeData` were each

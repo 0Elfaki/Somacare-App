@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../onboarding_prefs.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/auth/presentation/role_selection_screen.dart';
 import '../../features/auth/presentation/school_selection_screen.dart';
@@ -120,7 +121,7 @@ _SupabaseAuthNotifier get _authNotifier =>
 
 /// Public escape hatches for the login screens. `_authNotifier` is
 /// file-private, but a login screen needs to update the role the redirect
-/// guards below use the instant it knows the real answer — waiting on the
+/// guards below use the instant it knows the real answer - waiting on the
 /// `onAuthStateChange` → `refreshRole()` round trip left a window where a
 /// stale cached role (usually 'student', left over from a previous session
 /// on the same device) was still what `redirect` saw immediately after a
@@ -151,8 +152,20 @@ final GoRouter appRouter = GoRouter(
     ];
     final isAuthRoute = authRoutes.contains(loc);
 
-    // Redirect unauthenticated users to onboarding first
-    if (!loggedIn && !isAuthRoute) return '/onboarding';
+    // Onboarding is a one-time, first-run explainer, not a splash screen.
+    // Once this install has already seen it (Skip or "Get Started" both
+    // record this via `markOnboardingComplete`), never route back to it - // not on a cold start, and not after a later logout/login. Land on
+    // role-selection instead, which is the real "signed-out home" screen.
+    final onboardingSeen = await hasCompletedOnboarding();
+    if (loc == '/onboarding' && onboardingSeen) {
+      return loggedIn ? null : '/role-selection';
+    }
+
+    // Redirect unauthenticated users to onboarding first, but only if they
+    // have never seen it on this device.
+    if (!loggedIn && !isAuthRoute) {
+      return onboardingSeen ? '/role-selection' : '/onboarding';
+    }
 
     // Route guards: prevent wrong role from accessing wrong dashboard
     if (loggedIn) {
@@ -201,7 +214,7 @@ final GoRouter appRouter = GoRouter(
     // used to be in this set too, which meant a lingering session from a
     // previous login (Supabase persists sessions on-device) silently sent
     // anyone who opened either login screen straight to their *old*
-    // session's dashboard — before they could type new credentials at all.
+    // session's dashboard - before they could type new credentials at all.
     // That's the "I entered doctor credentials and it logged me into the
     // student side" report: the doctor credentials were never even checked;
     // the stale student session was still active and this redirect fired
@@ -593,7 +606,7 @@ final GoRouter appRouter = GoRouter(
       pageBuilder: (c, s) {
         final extra = s.extra;
         if (extra is! Map<String, dynamic> || extra['onConfirm'] == null) {
-          // Missing state (e.g. a page refresh on web) — bounce home rather
+          // Missing state (e.g. a page refresh on web) - bounce home rather
           // than crash on the required extra.
           return const MaterialPage(
             key: ValueKey('payment-fallback'),
@@ -683,7 +696,7 @@ final GoRouter appRouter = GoRouter(
 );
 
 /// Shown instead of crashing when a route that requires `extra` state
-/// (e.g. `/payment`, `/ai-result`) is entered without it — typically a
+/// (e.g. `/payment`, `/ai-result`) is entered without it - typically a
 /// browser refresh on web, or restored navigation state after the process
 /// was killed.
 class _MissingBookingRedirect extends StatefulWidget {

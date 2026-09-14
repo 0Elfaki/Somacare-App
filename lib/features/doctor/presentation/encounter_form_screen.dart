@@ -4,7 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/bloom_components.dart';
 
-/// Spec screen 28 — Encounter Form.
+/// Spec screen 28 - Encounter Form.
 ///
 /// There is no dedicated `encounters` table in the current schema, so the
 /// structured vitals/diagnosis are serialized into the existing
@@ -55,9 +55,9 @@ class _EncounterFormScreenState extends State<EncounterFormScreen> {
       ..writeln('Encounter')
       ..writeln('Chief complaint: ${_complaintCtrl.text.trim()}')
       ..writeln(
-        'Vitals: ${_tempCtrl.text.trim().isEmpty ? '—' : _tempCtrl.text.trim()} · '
-        '${_bpCtrl.text.trim().isEmpty ? '—' : _bpCtrl.text.trim()} · '
-        '${_hrCtrl.text.trim().isEmpty ? '—' : _hrCtrl.text.trim()}',
+        'Vitals: ${_tempCtrl.text.trim().isEmpty ? '-' : _tempCtrl.text.trim()} · '
+        '${_bpCtrl.text.trim().isEmpty ? '-' : _bpCtrl.text.trim()} · '
+        '${_hrCtrl.text.trim().isEmpty ? '-' : _hrCtrl.text.trim()}',
       )
       ..writeln('Diagnosis: ${_diagnosisCtrl.text.trim()}')
       ..writeln('Follow-up required: ${_followUpRequired ? 'Yes' : 'No'}');

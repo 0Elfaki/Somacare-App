@@ -61,7 +61,7 @@ class RoleSelectionScreen extends StatelessWidget {
               ),
               const SizedBox(height: 48),
 
-              // ✅ Student — push to student-login, no extra needed
+              // ✅ Student - push to student-login, no extra needed
               _RoleCard(
                 icon: Icons.school_rounded,
                 title: 'Student',
@@ -71,7 +71,7 @@ class RoleSelectionScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // ✅ Doctor — pass role:'doctor' so login screen auto-selects Doctor tab
+              // ✅ Doctor - pass role:'doctor' so login screen auto-selects Doctor tab
               _RoleCard(
                 icon: Icons.medical_services_rounded,
                 title: 'Doctor',

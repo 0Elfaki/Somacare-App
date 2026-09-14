@@ -7,7 +7,7 @@ import '../../../widgets/app_ui.dart';
 import '../../../widgets/bloom_components.dart';
 
 // ─────────────────────────────────────────────────────────────────────
-// Emergency Screen — localized for the Uganda health system
+// Emergency Screen - localized for the Uganda health system
 // ─────────────────────────────────────────────────────────────────────
 
 class EmergencyScreen extends StatefulWidget {
@@ -256,7 +256,7 @@ class _EmergencyScreenState extends State<EmergencyScreen>
     }
   }
 
-  /// Spec screen 24 — the in-app "Request emergency help" flow.
+  /// Spec screen 24 - the in-app "Request emergency help" flow.
   Future<void> _requestEmergencyHelp() async {
     if (_sendingAlert) return;
     setState(() => _sendingAlert = true);
@@ -378,15 +378,14 @@ class _EmergencyScreenState extends State<EmergencyScreen>
                     const BloomMapPlaceholder(height: 140),
                     const SizedBox(height: 10),
                     // The "Use current location" chip that lived here only
-                    // showed a fake success toast — it never requested
+                    // showed a fake success toast - it never requested
                     // location permission or read a real position, and this
                     // map is a static placeholder with nowhere to plot a pin
                     // anyway. Removed rather than left lying to the user;
                     // "Find Nearest Hospital" below already does something
                     // real (opens a live map search). Wiring true device
                     // location back in needs a geolocation package in the
-                    // project (e.g. geolocator) plus a real map surface —
-                    // flagging for a product/dependency decision rather than
+                    // project (e.g. geolocator) plus a real map surface - // flagging for a product/dependency decision rather than
                     // guessing at a package that may not be in pubspec.yaml.
                     const BloomSectionTitle("What's happening?"),
                     Container(

@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/avatar_upload.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/app_ui.dart';
 
@@ -17,10 +18,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic>? _profile;
   bool _isLoading = true;
   bool _isEditing = false;
+  String? _avatarUrl;
+  bool _isUploadingAvatar = false;
 
   // Nullable: null means the student has never recorded this vital, and
   // we must not show (or silently persist) a fabricated placeholder value
-  // in its place. _PickerRow already renders an empty value as '—'.
+  // in its place. _PickerRow already renders an empty value as '-'.
   int? _height;
   int? _weight;
   String? _bloodType;
@@ -65,13 +68,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final data = await Supabase.instance.client
           .from('profiles')
           .select(
-            'full_name,school,height,weight,blood_type,blood_pressure,allergies',
+            'full_name,school,height,weight,blood_type,blood_pressure,allergies,avatar_url',
           )
           .eq('id', userId)
           .maybeSingle();
       if (mounted) {
         setState(() {
           _profile = data;
+          _avatarUrl = data?['avatar_url'] as String?;
           _height = int.tryParse(data?['height']?.toString() ?? '');
           _weight = int.tryParse(data?['weight']?.toString() ?? '');
           _bloodType = data?['blood_type'] as String?;
@@ -93,13 +97,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  // ── Avatar ────────────────────────────────────────────────────────────────
+  Future<void> _changeAvatar() async {
+    if (_isUploadingAvatar) return;
+    setState(() => _isUploadingAvatar = true);
+    try {
+      final url = await changeProfilePhoto(context);
+      if (url != null && mounted) {
+        setState(() {
+          _avatarUrl = url;
+          _profile = {...?_profile, 'avatar_url': url};
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not update your photo: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploadingAvatar = false);
+    }
+  }
+
   // ── Save ──────────────────────────────────────────────────────────────────
   Future<void> _saveProfile() async {
     try {
       final userId = Supabase.instance.client.auth.currentUser?.id;
       if (userId == null) return;
       // Only write vitals the student has actually set via a picker (or
-      // that were already on file) — never a fabricated placeholder
+      // that were already on file) - never a fabricated placeholder
       // value for a field they never touched.
       final updates = <String, dynamic>{
         'id': userId,
@@ -369,7 +399,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // ── Payment Sheets ────────────────────────────────────────────────────────
-  // Linking a payment method here isn't wired to anything real yet — there
+  // Linking a payment method here isn't wired to anything real yet - there
   // is no backend table or gateway behind it. It used to collect a phone
   // number (or, worse, a full card number + expiry + CVV) and then claim
   // success regardless, which is worse than doing nothing: it told the
@@ -711,44 +741,93 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         child: Column(
                           children: [
-                            Stack(
-                              children: [
-                                Container(
-                                  width: 96,
-                                  height: 96,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.2),
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: Colors.white,
-                                      width: 3,
+                            GestureDetector(
+                              onTap: _changeAvatar,
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  ClipOval(
+                                    child: Container(
+                                      width: 96,
+                                      height: 96,
+                                      color: Colors.white.withValues(
+                                        alpha: 0.2,
+                                      ),
+                                      child:
+                                          _avatarUrl != null &&
+                                              _avatarUrl!.isNotEmpty
+                                          ? Image.network(
+                                              _avatarUrl!,
+                                              width: 96,
+                                              height: 96,
+                                              fit: BoxFit.cover,
+                                              errorBuilder:
+                                                  (context, error, stack) =>
+                                                      const Icon(
+                                                        Icons.person,
+                                                        color: Colors.white,
+                                                        size: 52,
+                                                      ),
+                                            )
+                                          : const Icon(
+                                              Icons.person,
+                                              color: Colors.white,
+                                              size: 52,
+                                            ),
                                     ),
                                   ),
-                                  child: const Icon(
-                                    Icons.person,
-                                    color: Colors.white,
-                                    size: 52,
-                                  ),
-                                ),
-                                Positioned(
-                                  bottom: 0,
-                                  right: 0,
-                                  child: Container(
-                                    width: 32,
-                                    height: 32,
-                                    decoration: const BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
-                                      boxShadow: AppShadows.sm,
-                                    ),
-                                    child: const Icon(
-                                      Icons.camera_alt,
-                                      size: 16,
-                                      color: AppColors.primary,
+                                  Positioned.fill(
+                                    child: DecoratedBox(
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Colors.white,
+                                          width: 3,
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                  if (_isUploadingAvatar)
+                                    Positioned.fill(
+                                      child: DecoratedBox(
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withValues(
+                                            alpha: 0.35,
+                                          ),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Center(
+                                          child: SizedBox(
+                                            width: 22,
+                                            height: 22,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  Positioned(
+                                    bottom: 0,
+                                    right: 0,
+                                    child: Container(
+                                      width: 32,
+                                      height: 32,
+                                      decoration: const BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                        boxShadow: AppShadows.sm,
+                                      ),
+                                      child: const Icon(
+                                        Icons.camera_alt,
+                                        size: 16,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                             const SizedBox(height: 16),
                             Text(
@@ -1341,7 +1420,7 @@ class _PickerRow extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      value.isEmpty ? '—' : value,
+                      value.isEmpty ? '-' : value,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -1455,7 +1534,7 @@ class _TypedRow extends StatelessWidget {
                   )
                 else
                   Text(
-                    ctrl.text.isEmpty ? '—' : ctrl.text,
+                    ctrl.text.isEmpty ? '-' : ctrl.text,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,

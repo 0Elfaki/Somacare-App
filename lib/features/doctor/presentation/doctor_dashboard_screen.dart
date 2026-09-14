@@ -484,10 +484,15 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                 child: Semantics(
                   button: true,
                   label: 'Your profile',
+                  // Same primary blue as the student header's avatar. Per
+                  // app_theme.dart, `doctorAccent` is reserved for the active
+                  // bottom-nav item and role-specific hero banners only - not
+                  // every doctor-side surface - so the header should read in
+                  // the one shared brand color, matching the student side.
                   child: AppAvatar(
                     name: _doctorName,
                     size: 42,
-                    color: AppColors.doctorAccent,
+                    imageUrl: _profile?['avatar_url'] as String?,
                   ),
                 ),
               ),

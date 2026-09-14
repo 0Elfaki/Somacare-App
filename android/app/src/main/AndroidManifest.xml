@@ -10,7 +10,7 @@
 
     <!-- The emergency screen opens the dialler with a `tel:` intent, which
          needs no permission. CALL_PHONE (placing a call directly) is a
-         dangerous permission and a Play Store policy flag — do not add it
+         dangerous permission and a Play Store policy flag - do not add it
          back unless the app really places the call itself. -->
 
     <!-- Agora needs these to pick the right audio route and to notice when

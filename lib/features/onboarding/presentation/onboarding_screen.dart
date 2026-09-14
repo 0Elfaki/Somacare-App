@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/onboarding_prefs.dart';
 import '../../../theme/app_theme.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -69,8 +70,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         curve: Curves.easeOut,
       );
     } else {
-      context.go('/role-selection');
+      _finish();
     }
+  }
+
+  /// Records that onboarding has been seen, then leaves for role selection.
+  /// Every way out of this screen (top-bar Skip, bottom Skip, and the final
+  /// "Get Started") must call this - it's the only thing that stops
+  /// onboarding from reappearing on the next app open or after a re-login.
+  Future<void> _finish() async {
+    await markOnboardingComplete();
+    if (mounted) context.go('/role-selection');
   }
 
   @override
@@ -127,7 +137,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             ],
                           ),
                           GestureDetector(
-                            onTap: () => context.go('/role-selection'),
+                            onTap: _finish,
                             child: Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 12,
@@ -342,8 +352,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               child: SizedBox(
                                 height: 48,
                                 child: OutlinedButton(
-                                  onPressed: () =>
-                                      context.go('/role-selection'),
+                                  onPressed: _finish,
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: AppColors.textSecondary,
                                     side: const BorderSide(

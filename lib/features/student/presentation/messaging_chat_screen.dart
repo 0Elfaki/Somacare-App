@@ -6,14 +6,14 @@ import '../data/message_model.dart';
 import '../data/message_repository.dart';
 import '../../../theme/app_theme.dart';
 
-/// Text-messaging screen between a student and their doctor — bubbles, an
+/// Text-messaging screen between a student and their doctor - bubbles, an
 /// attached image, a voice note, and a live typing indicator.
 ///
 /// Requires [doctorId]: with a signed-in student and a known doctor, the
 /// thread is loaded from and persisted to the `messages` Supabase table in
 /// realtime (see `lib/features/student/data/create_messages.sql`). If
-/// [doctorId] is missing — this screen was reached without a specific
-/// doctor to message — it shows a prompt to pick one from a confirmed
+/// [doctorId] is missing - this screen was reached without a specific
+/// doctor to message - it shows a prompt to pick one from a confirmed
 /// appointment rather than fabricating a conversation.
 class MessagingChatScreen extends StatefulWidget {
   final String doctorName;

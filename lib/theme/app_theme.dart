@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────────
-/// SomaCare Design System — single source of truth
+/// SomaCare Design System - single source of truth
 /// ─────────────────────────────────────────────────────────────────────────────
 ///
 /// One palette, one type scale, one set of shapes, for BOTH the student and
@@ -51,7 +51,7 @@ class AppColors {
   static const Color primaryTint = Color(0x282563EB);
 
   // ── Status hues ──────────────────────────────────────────────────────────
-  /// Success / "active" / confirmed. One green — not four.
+  /// Success / "active" / confirmed. One green - not four.
   static const Color success = Color(0xFF0D9488);
   static const Color successDark = Color(0xFF0F766E);
   static const Color successWash = Color(0x1A0D9488);
@@ -70,7 +70,7 @@ class AppColors {
   static const Color errorTint = Color(0x28DC2626);
 
   /// Emphasis surface for AI-assisted and wellness content. Deliberately
-  /// not a standalone "AI color" — same brand family as everything else,
+  /// not a standalone "AI color" - same brand family as everything else,
   /// so AI-assisted features don't visually announce themselves as a
   /// separate, flashier product. (Brand maroon-600/700; the rest of the
   /// app migrates to this family in a later pass.)
@@ -99,13 +99,13 @@ class AppColors {
   static const Color scrim = Color(0x660F172A);
 
   // ── Text ─────────────────────────────────────────────────────────────────
-  /// 15.8:1 on [surface] — passes WCAG AAA.
+  /// 15.8:1 on [surface] - passes WCAG AAA.
   static const Color textPrimary = Color(0xFF1E293B);
 
-  /// 4.76:1 on [surface] — passes WCAG AA for body text.
+  /// 4.76:1 on [surface] - passes WCAG AA for body text.
   static const Color textSecondary = Color(0xFF64748B);
 
-  /// 2.8:1 — decorative only. Never use for text a user must read; use
+  /// 2.8:1 - decorative only. Never use for text a user must read; use
   /// [textSecondary] instead. Kept for borders, dividers and disabled icons.
   static const Color textMuted = Color(0xFF94A3B8);
 
@@ -114,7 +114,7 @@ class AppColors {
 
   // ── Opaque status surfaces ───────────────────────────────────────────────
   // The flat equivalents of the `*Wash` tints, for badges and callout cards
-  // that sit ON a white card — where a translucent wash would let the card
+  // that sit ON a white card - where a translucent wash would let the card
   // show through and read as a different colour than the same badge on the
   // page background.
   static const Color primarySurface = Color(0xFFEFF6FF);
@@ -168,7 +168,7 @@ class PaymentBrandColors {
 
 /// Type scale.
 ///
-/// Raised from the previous scale, which bottomed out at 8.5px — well below
+/// Raised from the previous scale, which bottomed out at 8.5px - well below
 /// the ~11px floor at which text stays legible on a phone, and far below the
 /// 16px browsers use as their body default. Body copy is now 15px and the
 /// smallest label is 11px.
@@ -194,7 +194,7 @@ class AppTypography {
   static const double labelSmall = 11;
 }
 
-/// Elevation. These are light-theme shadows — soft, low-opacity, and tinted
+/// Elevation. These are light-theme shadows - soft, low-opacity, and tinted
 /// with the slate used everywhere else, not pure black.
 class AppShadows {
   static const List<BoxShadow> none = <BoxShadow>[];
@@ -270,7 +270,7 @@ class AppTouch {
 /// Text-style factories. Prefer `Theme.of(context).textTheme` where possible;
 /// these exist for the many places that need a one-off size or colour.
 class BloomTextStyles {
-  /// Fraunces — display and headings.
+  /// Fraunces - display and headings.
   static TextStyle fraunces({
     double size = AppTypography.displayMedium,
     FontWeight weight = FontWeight.w600,
@@ -286,7 +286,7 @@ class BloomTextStyles {
     letterSpacing: letterSpacing,
   );
 
-  /// Inter — body and UI.
+  /// Inter - body and UI.
   static TextStyle inter({
     double size = AppTypography.bodyLarge,
     FontWeight weight = FontWeight.w400,
@@ -304,7 +304,7 @@ class BloomTextStyles {
     decoration: decoration,
   );
 
-  /// IBM Plex Mono — data, prices, dosages, timestamps.
+  /// IBM Plex Mono - data, prices, dosages, timestamps.
   static TextStyle mono({
     double size = AppTypography.bodySmall,
     FontWeight weight = FontWeight.w500,
@@ -566,7 +566,7 @@ ThemeData buildAppTheme() {
         size: AppTypography.bodyLarge,
         color: AppColors.textSecondary,
       ),
-      // A real, always-visible label — not a placeholder that vanishes on focus.
+      // A real, always-visible label - not a placeholder that vanishes on focus.
       labelStyle: BloomTextStyles.inter(
         size: AppTypography.bodyLarge,
         color: AppColors.textSecondary,

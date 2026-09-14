@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../theme/app_theme.dart';
 
-/// Spec screen 11 — Video Waiting Room.
+/// Spec screen 11 - Video Waiting Room.
 ///
 /// A short connecting screen shown before the student is dropped into
 /// [ConsultScreen]. Expects a route `extra` map with:
 /// - `doctorName` (String)
-/// - `channelId` (String?) — forwarded to `/consult`
+/// - `channelId` (String?) - forwarded to `/consult`
 class VideoWaitingRoomScreen extends StatefulWidget {
   final String doctorName;
   final String? channelId;
@@ -35,8 +35,7 @@ class _VideoWaitingRoomScreenState extends State<VideoWaitingRoomScreen> {
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() => _elapsedSeconds++);
     });
-    // Brief connecting delay before dropping into the real call screen —
-    // ConsultScreen itself shows a "waiting for doctor" state if the
+    // Brief connecting delay before dropping into the real call screen - // ConsultScreen itself shows a "waiting for doctor" state if the
     // remote party hasn't joined yet.
     _autoJoin = Timer(const Duration(milliseconds: 2200), () {
       if (mounted) {

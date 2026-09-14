@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/avatar_upload.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/app_ui.dart';
 
@@ -21,6 +22,7 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
   bool _isEditing = false;
   bool _isSaving = false;
   String? _profileImageBase64;
+  bool _isUploadingAvatar = false;
   // Session-only: no local-storage or backend column is wired up for this
   // yet, so it doesn't survive an app restart, but it's a real toggle now
   // rather than a switch that silently ignored every tap.
@@ -129,6 +131,31 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  Future<void> _changeAvatar() async {
+    if (_isUploadingAvatar) return;
+    setState(() => _isUploadingAvatar = true);
+    try {
+      final url = await changeProfilePhoto(context);
+      if (url != null && mounted) {
+        setState(() {
+          _profileImageBase64 = url;
+          _profile = {...?_profile, 'avatar_url': url};
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not update your photo: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploadingAvatar = false);
     }
   }
 
@@ -550,8 +577,57 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
                         ),
                         child: Column(
                           children: [
-                            // Profile Image (non-editable)
-                            _buildProfileImage(),
+                            // Profile Image - tap to change (camera or
+                            // gallery), uploaded to Supabase Storage.
+                            GestureDetector(
+                              onTap: _changeAvatar,
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  _buildProfileImage(),
+                                  if (_isUploadingAvatar)
+                                    Positioned.fill(
+                                      child: DecoratedBox(
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withValues(
+                                            alpha: 0.35,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(28),
+                                        ),
+                                        child: const Center(
+                                          child: SizedBox(
+                                            width: 22,
+                                            height: 22,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  Positioned(
+                                    bottom: -4,
+                                    right: -4,
+                                    child: Container(
+                                      width: 32,
+                                      height: 32,
+                                      decoration: const BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                        boxShadow: AppShadows.sm,
+                                      ),
+                                      child: const Icon(
+                                        Icons.camera_alt,
+                                        size: 16,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                             const SizedBox(height: 16),
                             Text(
                               fullName,

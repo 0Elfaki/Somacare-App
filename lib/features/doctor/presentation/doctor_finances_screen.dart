@@ -53,7 +53,7 @@ class _DoctorFinancesScreenState extends State<DoctorFinancesScreen> {
               .order('date', ascending: false),
         );
       } catch (_) {
-        // fee/payment_status columns may not exist yet — fall back
+        // fee/payment_status columns may not exist yet - fall back
         // to showing completed appointments as "paid"
         try {
           final allAppts = await Supabase.instance.client

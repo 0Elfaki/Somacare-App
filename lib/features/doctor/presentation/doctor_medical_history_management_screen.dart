@@ -136,8 +136,7 @@ class _DoctorMedicalHistoryManagementScreenState
         return;
       }
 
-      // Fetch profiles only for the students this doctor has actually seen —
-      // never the full patient roster.
+      // Fetch profiles only for the students this doctor has actually seen - // never the full patient roster.
       List<dynamic> profilesData = [];
       try {
         profilesData = await _client

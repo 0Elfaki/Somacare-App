@@ -26,4 +26,4 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 ---
 
 For licensing inquiries, commercial partnerships, or permission requests, please contact:
-**Megdad Elfaki** — `megdad.elfaki@gmail.com`
+**Megdad Elfaki** - `megdad.elfaki@gmail.com`

@@ -5,7 +5,7 @@ import '../../../widgets/bloom_components.dart';
 
 enum AiRiskLevel { low, medium, high }
 
-/// Spec screen 7 — AI Result Screen.
+/// Spec screen 7 - AI Result Screen.
 ///
 /// Expects a route `extra` map with:
 /// - `risk` (String: 'low' | 'medium' | 'high')

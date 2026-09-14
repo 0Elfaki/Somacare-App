@@ -196,7 +196,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
     );
 
     // The five controllers above live exactly as long as the sheet. Without
-    // this they leaked on every open — each one holds a listener list and a
+    // this they leaked on every open - each one holds a listener list and a
     // native text-input connection.
     for (final c in [testCtrl, valueCtrl, unitCtrl, lowCtrl, highCtrl]) {
       c.dispose();
@@ -294,7 +294,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
   Widget build(BuildContext context) {
     final fullName = (_profile?['full_name'] as String?) ?? _studentName;
     final school = (_profile?['school'] as String?) ?? '';
-    // Vitals are shown only when actually on file — a doctor seeing a
+    // Vitals are shown only when actually on file - a doctor seeing a
     // number here has to be able to trust it's the student's real data,
     // not a plausible-looking placeholder.
     final height = int.tryParse((_profile?['height'] ?? '').toString());

@@ -48,7 +48,7 @@ class _DoctorAppointmentsScreenState extends State<DoctorAppointmentsScreen>
           .order('created_at', ascending: false);
 
       // Some older rows may have been written keyed by doctor_name instead
-      // of doctor_id — fall back to that, but stay scoped to this doctor.
+      // of doctor_id - fall back to that, but stay scoped to this doctor.
       // Never fall back to an unfiltered query: that would show every
       // patient's appointments to any doctor whose own list is empty.
       if (data.isEmpty) {
@@ -68,7 +68,7 @@ class _DoctorAppointmentsScreenState extends State<DoctorAppointmentsScreen>
                 .order('created_at', ascending: false);
           }
         } catch (_) {
-          // Non-fatal — the doctor simply has no legacy-keyed appointments.
+          // Non-fatal - the doctor simply has no legacy-keyed appointments.
         }
       }
 
