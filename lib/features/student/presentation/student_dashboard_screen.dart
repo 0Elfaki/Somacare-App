@@ -234,11 +234,19 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       slivers: [
         SliverToBoxAdapter(
           child: AppPageHeader(
-            eyebrow: _greeting,
             title: _studentName.isNotEmpty
-                ? 'Hi, $_studentName 👋'
-                : 'Hi there 👋',
+                ? 'Hello, $_studentName 👋'
+                : 'Hello there 👋',
+            subtitle: 'How are you feeling today?',
             actions: [
+              GestureDetector(
+                onTap: () => context.push('/profile'),
+                child: Semantics(
+                  button: true,
+                  label: 'Your profile',
+                  child: AppAvatar(name: _studentName, size: 42),
+                ),
+              ),
               AppCircleButton(
                 icon: Icons.notifications_outlined,
                 tooltip: 'Notifications',

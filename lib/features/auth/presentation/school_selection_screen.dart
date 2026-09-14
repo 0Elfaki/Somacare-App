@@ -78,9 +78,25 @@ class _SchoolSelectionScreenState extends State<SchoolSelectionScreen> {
     try {
       final userId = Supabase.instance.client.auth.currentUser?.id;
       if (userId != null) {
+        // `profiles` has no `school` column — it's `school_id` (uuid,
+        // references `schools.id`). This upsert previously sent a raw
+        // school *name* under a column that doesn't exist at all, so it
+        // always failed with a Postgrest "column not found" error caught
+        // below as "Failed: ...". Resolve the name to its id first. Note
+        // `schools.name` isn't unique in the seed data (a few names have
+        // duplicate rows with different ids) — this takes the first match,
+        // which is a pre-existing data-quality issue, not something fixed
+        // here.
+        final schoolRow = await Supabase.instance.client
+            .from('schools')
+            .select('id')
+            .eq('name', _selectedSchool!)
+            .limit(1)
+            .maybeSingle();
+        final schoolId = schoolRow?['id'] as String?;
         await Supabase.instance.client
             .from('profiles')
-            .upsert({'id': userId, 'school': _selectedSchool})
+            .upsert({'id': userId, if (schoolId != null) 'school_id': schoolId})
             .select('id');
         if (mounted) {
           WidgetsBinding.instance.addPostFrameCallback((_) {

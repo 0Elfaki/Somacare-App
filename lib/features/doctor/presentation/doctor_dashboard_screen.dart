@@ -474,11 +474,23 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
       slivers: [
         SliverToBoxAdapter(
           child: AppPageHeader(
-            eyebrow: '$_greeting · $_specialization',
             title: _loading && _profile == null
                 ? 'Loading…'
-                : '$_doctorName 👋',
+                : 'Hello, $_doctorName 👋',
+            subtitle: '$_greeting · $_specialization',
             actions: [
+              GestureDetector(
+                onTap: () => context.push('/doctor-profile'),
+                child: Semantics(
+                  button: true,
+                  label: 'Your profile',
+                  child: AppAvatar(
+                    name: _doctorName,
+                    size: 42,
+                    color: AppColors.doctorAccent,
+                  ),
+                ),
+              ),
               AppCircleButton(
                 icon: Icons.notifications_outlined,
                 tooltip: 'Notifications',

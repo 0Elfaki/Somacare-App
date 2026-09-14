@@ -494,40 +494,42 @@ class AppStatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final shown = loading ? '—' : value;
+    // Icon badge on top, value + label stacked underneath — the same
+    // silhouette as an [AppQuickActionCard] tile, just on a white surface
+    // with a soft shadow instead of a saturated fill. Keeping the two card
+    // families visually related is the point: a stat card and a quick
+    // action now read as the same kind of object at a glance.
     return AppCard(
       onTap: onTap,
-      padding: const EdgeInsets.all(AppSpacing.md),
+      elevated: true,
+      borderColor: AppColors.borderSubtle,
+      padding: const EdgeInsets.all(AppSpacing.lg),
       semanticLabel: '$shown ${label.replaceAll('\n', ' ')}',
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          AppIconChip(icon: icon, color: color, size: 40),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  shown,
-                  style: BloomTextStyles.fraunces(
-                    size: AppTypography.displaySmall,
-                    weight: FontWeight.w600,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  label,
-                  style: BloomTextStyles.inter(
-                    size: AppTypography.labelSmall,
-                    color: AppColors.textSecondary,
-                    height: 1.25,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+          AppIconChip(icon: icon, color: color, size: 40, radius: AppRadius.md),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            shown,
+            style: BloomTextStyles.fraunces(
+              size: AppTypography.headlineMedium,
+              weight: FontWeight.w700,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: BloomTextStyles.inter(
+              size: AppTypography.labelMedium,
+              color: AppColors.textSecondary,
+              height: 1.25,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -546,8 +548,10 @@ class AppStatRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Below ~150px per card the value and label stop fitting side by side.
-        final perRow = constraints.maxWidth >= cards.length * 150
+        // The card stacks icon → value → label vertically now, so it needs
+        // far less width than the old icon-beside-text row did. ~108px is
+        // enough for a short value and a two-line label without clipping.
+        final perRow = constraints.maxWidth >= cards.length * 108
             ? cards.length
             : 2;
         const gap = AppSpacing.md;

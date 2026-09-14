@@ -259,6 +259,164 @@ class _MyMedicationsScreenState extends ConsumerState<MyMedicationsScreen>
     );
   }
 
+  /// The app-bar "add" icon used to just show a "coming soon" toast, even
+  /// though `MedicationNotifier.addMedication` (and the real `medications`
+  /// insert behind it in `medication_repository.dart`) already existed and
+  /// was already used by `_buildMedicationCard`'s refill flow. This wires
+  /// the icon to a real form instead of leaving it as a dead tap.
+  void _showAddMedicationDialog() {
+    final nameCtrl = TextEditingController();
+    final dosageCtrl = TextEditingController();
+    final frequencyCtrl = TextEditingController();
+    final prescribedByCtrl = TextEditingController();
+    final instructionsCtrl = TextEditingController();
+    bool isSaving = false;
+    String? errorText;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (sheetContext, setModalState) => Container(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+          ),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Add Medication',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 20),
+                _AddMedicationField(label: 'Name', controller: nameCtrl, hint: 'e.g. Amoxicillin'),
+                const SizedBox(height: 14),
+                _AddMedicationField(label: 'Dosage', controller: dosageCtrl, hint: 'e.g. 500mg'),
+                const SizedBox(height: 14),
+                _AddMedicationField(
+                  label: 'Frequency',
+                  controller: frequencyCtrl,
+                  hint: 'e.g. Twice daily',
+                ),
+                const SizedBox(height: 14),
+                _AddMedicationField(
+                  label: 'Prescribed by (optional)',
+                  controller: prescribedByCtrl,
+                  hint: 'e.g. Dr. Achieng',
+                ),
+                const SizedBox(height: 14),
+                _AddMedicationField(
+                  label: 'Instructions (optional)',
+                  controller: instructionsCtrl,
+                  hint: 'e.g. Take with food',
+                  maxLines: 2,
+                ),
+                if (errorText != null) ...[
+                  const SizedBox(height: 12),
+                  Text(errorText!, style: const TextStyle(color: AppColors.error)),
+                ],
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: isSaving
+                        ? null
+                        : () async {
+                            final name = nameCtrl.text.trim();
+                            final dosage = dosageCtrl.text.trim();
+                            final frequency = frequencyCtrl.text.trim();
+                            if (name.isEmpty || dosage.isEmpty || frequency.isEmpty) {
+                              setModalState(() =>
+                                  errorText = 'Name, dosage and frequency are required.');
+                              return;
+                            }
+                            setModalState(() {
+                              isSaving = true;
+                              errorText = null;
+                            });
+                            final ok = await ref
+                                .read(medicationProvider.notifier)
+                                .addMedication(
+                                  Medication(
+                                    id: '',
+                                    name: name,
+                                    dosage: dosage,
+                                    frequency: frequency,
+                                    prescribedBy: prescribedByCtrl.text.trim(),
+                                    startDate: DateTime.now(),
+                                    status: MedicationStatus.active,
+                                    refillsRemaining: 0,
+                                    refillsTotal: 0,
+                                    instructions: instructionsCtrl.text.trim().isEmpty
+                                        ? null
+                                        : instructionsCtrl.text.trim(),
+                                  ),
+                                );
+                            if (!sheetContext.mounted) return;
+                            if (ok) {
+                              Navigator.pop(sheetContext);
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('$name added to your medications'),
+                                  backgroundColor: AppColors.success,
+                                ),
+                              );
+                            } else {
+                              setModalState(() {
+                                isSaving = false;
+                                errorText =
+                                    'Could not save this medication. Please try again.';
+                              });
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: isSaving
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text('Add Medication'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final medicationState = ref.watch(medicationProvider);
@@ -294,17 +452,9 @@ class _MyMedicationsScreenState extends ConsumerState<MyMedicationsScreen>
                   ),
                   actions: [
                     IconButton(
-                      tooltip: 'Add a reminder',
-                      icon: const Icon(Icons.add_alert, color: Colors.white),
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Add new medication feature coming soon!',
-                            ),
-                          ),
-                        );
-                      },
+                      tooltip: 'Add medication',
+                      icon: const Icon(Icons.add, color: Colors.white),
+                      onPressed: _showAddMedicationDialog,
                     ),
                   ],
                   bottom: TabBar(
@@ -1291,5 +1441,57 @@ class _MyMedicationsScreenState extends ConsumerState<MyMedicationsScreen>
       'December',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
+  }
+}
+
+class _AddMedicationField extends StatelessWidget {
+  final String label;
+  final TextEditingController controller;
+  final String? hint;
+  final int maxLines;
+
+  const _AddMedicationField({
+    required this.label,
+    required this.controller,
+    this.hint,
+    this.maxLines = 1,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+        ),
+        const SizedBox(height: 6),
+        TextField(
+          controller: controller,
+          maxLines: maxLines,
+          decoration: InputDecoration(
+            hintText: hint,
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 12,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: AppColors.border),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: AppColors.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: AppColors.primary, width: 2),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }

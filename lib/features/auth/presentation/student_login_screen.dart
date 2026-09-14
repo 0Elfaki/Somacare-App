@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/routing/app_router.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/app_ui.dart';
 
@@ -63,6 +66,17 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
   @override
   void initState() {
     super.initState();
+    // A lingering session from a previous login (Supabase persists sessions
+    // on-device) used to mean the router's own redirect guard sent anyone
+    // who opened this screen straight to that old session's dashboard,
+    // before they could type different credentials at all — the doctor
+    // credentials were never actually checked. Reaching a login screen
+    // means the user wants to authenticate as someone (possibly someone
+    // else), so drop any existing session first.
+    if (Supabase.instance.client.auth.currentSession != null) {
+      clearCachedAuthRole();
+      unawaited(Supabase.instance.client.auth.signOut());
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final extra = GoRouterState.of(context).extra;
@@ -118,9 +132,22 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
         return;
       }
       if (_role == 'student' && _selectedSchool != null) {
-        await Supabase.instance.client
-            .from('profiles')
-            .upsert({'id': userId, 'school': _selectedSchool}).select('id');
+        // Same `school` -> `school_id` column-name bug as
+        // school_selection_screen.dart's `_confirmSchool` (that column
+        // doesn't exist on `profiles`); resolve the school name to its id
+        // the same way before writing it.
+        final schoolRow = await Supabase.instance.client
+            .from('schools')
+            .select('id')
+            .eq('name', _selectedSchool!)
+            .limit(1)
+            .maybeSingle();
+        final schoolId = schoolRow?['id'] as String?;
+        if (schoolId != null) {
+          await Supabase.instance.client
+              .from('profiles')
+              .upsert({'id': userId, 'school_id': schoolId}).select('id');
+        }
       }
       // Only write a role when this account had no profile row yet, never
       // overwrite an existing role from the client. `dbRole` already had to
@@ -134,6 +161,13 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
             .upsert({'id': userId, 'role': _role}).select('id');
       }
       if (!mounted) return;
+      // Set the router's cached role synchronously instead of waiting on
+      // the async onAuthStateChange -> refreshRole() round trip. `dbRole`
+      // was already confirmed to equal `_role` above, so this is exactly
+      // the role the redirect guard should use for the `context.go` below —
+      // without this, the guard could still be holding the *previous*
+      // session's role for a moment and bounce the user right back.
+      setCachedAuthRole(_role);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         if (_role == 'doctor') {
@@ -484,7 +518,9 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                                         ? 'UG-MD-33847'
                                         : 'name@school.edu',
                                     controller: _emailController,
-                                    keyboardType: TextInputType.emailAddress,
+                                    keyboardType: isDoctor
+                                        ? TextInputType.text
+                                        : TextInputType.emailAddress,
                                     prefixIcon: isDoctor
                                         ? Icons.badge_outlined
                                         : Icons.mail_outline_rounded,

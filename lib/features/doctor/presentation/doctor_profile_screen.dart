@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../theme/app_theme.dart';
 import '../../../widgets/app_ui.dart';
@@ -331,6 +332,27 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
     }
   }
 
+  /// Opens the device's mail app addressed to support. Previously this
+  /// dialog listed a placeholder US phone number and an unverifiable
+  /// "24/7 chat" line with no chat entry point anywhere in the app, and
+  /// "Contact Support" just showed a toast promising outreach that never
+  /// happens. Only the one real, verifiable channel (email) remains, and
+  /// the button now does something real instead of faking a promise.
+  Future<void> _emailSupport(BuildContext dialogContext) async {
+    final uri = Uri(scheme: 'mailto', path: 'support@somacare.ug');
+    Navigator.pop(dialogContext);
+    final launched = await launchUrl(uri);
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Could not open a mail app. Email support@somacare.ug directly.',
+          ),
+        ),
+      );
+    }
+  }
+
   void _showHelpDialog() {
     showDialog(
       context: context,
@@ -348,7 +370,7 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Need help? Here are some options:',
+              'Need help? Reach out by email:',
               style: TextStyle(color: AppColors.textSecondary),
             ),
             SizedBox(height: 16),
@@ -356,23 +378,7 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
               children: [
                 Icon(Icons.mail_outline, size: 16, color: AppColors.textSecondary),
                 SizedBox(width: 10),
-                Text('Email: support@somacare.ug'),
-              ],
-            ),
-            SizedBox(height: 10),
-            Row(
-              children: [
-                Icon(Icons.call_outlined, size: 16, color: AppColors.textSecondary),
-                SizedBox(width: 10),
-                Text('Phone: +1 234 567 890'),
-              ],
-            ),
-            SizedBox(height: 10),
-            Row(
-              children: [
-                Icon(Icons.chat_bubble_outline, size: 16, color: AppColors.textSecondary),
-                SizedBox(width: 10),
-                Text('Chat: Available 24/7'),
+                Text('support@somacare.ug'),
               ],
             ),
           ],
@@ -383,16 +389,8 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
             child: const Text('Close'),
           ),
           ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Support team will contact you soon!'),
-                  backgroundColor: AppColors.success,
-                ),
-              );
-            },
-            child: const Text('Contact Support'),
+            onPressed: () => _emailSupport(ctx),
+            child: const Text('Email Support'),
           ),
         ],
       ),
@@ -416,7 +414,7 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Version 2.0.0 2026',
+              'Version 2.0.0, 2026',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: AppColors.textPrimary,

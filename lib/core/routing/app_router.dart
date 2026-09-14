@@ -118,6 +118,18 @@ _SupabaseAuthNotifier? __authNotifier;
 _SupabaseAuthNotifier get _authNotifier =>
     __authNotifier ??= _SupabaseAuthNotifier();
 
+/// Public escape hatches for the login screens. `_authNotifier` is
+/// file-private, but a login screen needs to update the role the redirect
+/// guards below use the instant it knows the real answer — waiting on the
+/// `onAuthStateChange` → `refreshRole()` round trip left a window where a
+/// stale cached role (usually 'student', left over from a previous session
+/// on the same device) was still what `redirect` saw immediately after a
+/// *different*-role sign-in, bouncing the user straight back to the old
+/// role's dashboard. See `student_login_screen.dart` for where these are
+/// called from.
+void setCachedAuthRole(String? role) => _authNotifier.setCachedRole(role);
+void clearCachedAuthRole() => _authNotifier.clearCachedRole();
+
 final GoRouter appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: '/onboarding',
@@ -184,7 +196,19 @@ final GoRouter appRouter = GoRouter(
     if (loc == '/student-profile') return null;
     if (loc == '/prescription-writer') return null;
 
-    if (loggedIn && isAuthRoute) {
+    // Only `/onboarding` and `/role-selection` bounce an already-logged-in
+    // user back to their dashboard. `/student-login` and `/doctor-login`
+    // used to be in this set too, which meant a lingering session from a
+    // previous login (Supabase persists sessions on-device) silently sent
+    // anyone who opened either login screen straight to their *old*
+    // session's dashboard — before they could type new credentials at all.
+    // That's the "I entered doctor credentials and it logged me into the
+    // student side" report: the doctor credentials were never even checked;
+    // the stale student session was still active and this redirect fired
+    // first. Login screens now sign out any existing session on entry (see
+    // `student_login_screen.dart`) instead of relying on this bounce.
+    final bounceIfLoggedIn = loc == '/onboarding' || loc == '/role-selection';
+    if (loggedIn && bounceIfLoggedIn) {
       // Use cached role if available
       String role = _authNotifier.cachedRole ?? '';
 

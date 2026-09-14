@@ -159,30 +159,20 @@ class _MedicalStoreScreenState extends ConsumerState<MedicalStoreScreen>
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
           actions: [
-            IconButton(
-              tooltip: 'Cart',
-              icon: const Icon(Icons.shopping_cart, color: Colors.white),
-              onPressed: () {
-                setState(() {
-                  _showCart = true;
-                });
-              },
-            ),
+            // This badge used to render on the notifications bell below
+            // instead of here, so the cart button never showed its own
+            // count and the bell showed a count that had nothing to do
+            // with notifications.
             Stack(
               alignment: Alignment.center,
               children: [
                 IconButton(
-                  tooltip: 'Notifications',
-                  icon: const Icon(
-                    Icons.notifications_outlined,
-                    color: Colors.white,
-                  ),
+                  tooltip: 'Cart',
+                  icon: const Icon(Icons.shopping_cart, color: Colors.white),
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Notifications coming soon!'),
-                      ),
-                    );
+                    setState(() {
+                      _showCart = true;
+                    });
                   },
                 ),
                 if (storeState.cartItemCount > 0)
@@ -206,6 +196,20 @@ class _MedicalStoreScreenState extends ConsumerState<MedicalStoreScreen>
                     ),
                   ),
               ],
+            ),
+            // Was a dead tap showing "Notifications coming soon!" even
+            // though the app already has a real notifications screen
+            // (`/notifications`, used from the doctor side). Routed there
+            // instead; note the backing table is doctor-scoped today, so a
+            // student will see the real empty state until student
+            // notifications are added server-side, rather than a fake toast.
+            IconButton(
+              tooltip: 'Notifications',
+              icon: const Icon(
+                Icons.notifications_outlined,
+                color: Colors.white,
+              ),
+              onPressed: () => context.push('/notifications'),
             ),
           ],
           bottom: TabBar(
